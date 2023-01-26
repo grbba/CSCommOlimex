@@ -132,15 +132,16 @@ auto DccExInterface::recieve() -> void
             
             byte nt = network->getNumberOfTransports();                 // #of networkinterfaces which have been instantiated
             transportType *tt = network->getArrayOfTransportTypes();    // for each of the interfaces we know the transport type 
-            
+
             for (byte i = 0; i < nt; i++)
             {
                 switch(tt[i]) {
                     case WIFI: {
                         WiFiTransport *wt = static_cast<WiFiTransport *>(network->transports[i]);
+                        if (wt->getActive() == 0) break;  // nothing to be done no clients
                         WiFiClient wtc = wt->getClient(m.client);
                         if(wtc.connected()) {
-                            wtc.write(m.msg.c_str());
+                            wtc.write(m.msg.c_str());wtc.write(CR); // CR -> just so that we have a nl in the terminal ...
                         } else {
                             WARN(F("WiFi client not connected. Can't send reply" CR));
                         }
@@ -148,9 +149,10 @@ auto DccExInterface::recieve() -> void
                     }
                     case ETHERNET: {
                         EthernetTransport *et = static_cast<EthernetTransport *>(network->transports[i]);
+                        if (et->getActive() == 0) break;  // nothing to be done no clients
                         EthernetClient etc = et->getClient(m.client);
                         if (etc.connected()) { 
-                            etc.write(m.msg.c_str());
+                            etc.write(m.msg.c_str());etc.write(CR);
                         } else {
                             WARN(F("Ethernet client not connected. Can't send reply" CR));
                         }
