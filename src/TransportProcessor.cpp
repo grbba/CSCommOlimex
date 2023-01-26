@@ -65,7 +65,7 @@ void dumpRingStreamBuffer(byte *b, int len)
 
 void sendWiThrottleToDCC(Connection *c, TransportProcessor *t, bool blocking)
 {
-    INFO(F("sendWiThrottle: Can not send Withrottle commands to the command station" CR));
+    INFO(F("sendWiThrottle: Can not send yet Withrottle commands to the command station" CR));
 
 #ifdef WITHROTTLE_ENABLED
     
@@ -105,6 +105,7 @@ void sendJmriToDCC(Connection *c, TransportProcessor *t, bool blocking)
     INFO(F("Sending JMRI commands to the Commandstation" CR));
 
     DCCI.queue(c->id, 0, &t->command[0]);  // queued to be send over 
+
 
 #ifdef CS_ENABLED
     MemStream streamer((byte *)t->command, MAX_ETH_BUFFER, MAX_ETH_BUFFER, true);

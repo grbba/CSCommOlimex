@@ -65,21 +65,17 @@ void setup()
   // create the connection to the Command station
   DCCI.setup(_NWSTA);  // set up as Network station just use the default values
 
-
   // open the connection to the "outside world" over Ethernet (cabled) or WiFi (wireless) 
-
   // nwi1.setup(ETHERNET, UDPR);                    // ETHERNET/UDP on Port 2560 
   // nwi2.setup(ETHERNET, UDPR, 8888);              // ETHERNET/UDP on Port 8888 
   nwi1.setup(ETHERNET, TCP);                        // ETHERNET/TCP on Port 2560 
   // nwi2.setup(ETHERNET, TCP, 23);                 // ETHERNET/TCP on Port 23 for the CLI
   // nwi1.setup(ETHERNET, TCP, 8888);               // ETHERNET/TCP on Port 8888
-  // nwi2.setup(WIFI, TCP);                         // WIFI/TCP on Port 2560
+  nwi2.setup(WIFI, TCP);                            // WIFI/TCP on Port 2560
   // nwi1.setHttpCallback(httpRequestHandler);      // HTTP callback
 
   INFO(F("Network Setup done ...\n"));
   INFO(F("Free RAM after network init: [%d]\n"),freeMemory());
-
-  // printStats();
 
   // (2) End starting NetworkInterface
 

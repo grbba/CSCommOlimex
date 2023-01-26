@@ -28,6 +28,13 @@
 #include "NetworkInterface.h"
 
 
+// on the ESP32 there is no disticinction of both
+
+typedef WiFiServer EthernetServer;
+typedef WiFiUDP EthernetUDP;
+typedef WiFiClient EthernetClient;
+
+
 typedef enum
 {
     DCCEX,      // if char[0] = < opening bracket the client should be a JMRI / DCC EX client_h
@@ -94,6 +101,9 @@ public:
 
     bool setup(NetworkInterface* nwi);      // we get the callbacks from the NetworkInterface 
     void loop(); 
+    C getClient(int c) {
+        return clients[c];
+    }
 
     bool isConnected() {
         return connected;
@@ -103,5 +113,8 @@ public:
     ~Transport<S,C,U>();
     
 };
+
+typedef Transport<EthernetServer,EthernetClient,EthernetUDP>  EthernetTransport;
+typedef Transport<WiFiServer, WiFiClient, WiFiUDP> WiFiTransport;
 
 #endif // !Transport_h

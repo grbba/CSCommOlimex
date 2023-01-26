@@ -33,13 +33,11 @@
 
 #include <Arduino.h>
 #include <DIAG.h>
+#include "NetworkInterface.h"
+#include "Transport.h"
 #include "DccExInterface.h"
 
-#ifdef NW_COM
-_tDccQueue DccExInterface::inco;
-_tDccQueue DccExInterface::outg;
-#endif
-
+DCCNetwork *network = NetworkInterface::getDCCNetwork();
 
 /**
  * @brief callback function upon reception of a DccMessage. Adds the message into the incomming queue
@@ -121,11 +119,49 @@ auto DccExInterface::recieve() -> void
         {
             ERR(F("Ctrl messages not yet supported. Message ignored" CR));
             break;
-        }   // messages starting with # are send to ctrl/manage the cs sie of things
+        }   // messages starting with # are send to ctrl/manage the network on cs or nw side
             // not used by the CS - valid only if the sta which send is NW i.e. the CS is the reciever
+            // CTRL cmds can also be ecieved on the NW side of things 
+            // #C CMD# #N CMD#  #N L V# -> log verbose on the NetworkStation 
         case _REPLY:
         {
-            INFO(F("(Not yet) Processing reply from the CommandStation..." CR));
+            INFO(F("Processing reply from the CommandStation for client [%d]..." CR), m.client);
+
+            // search for the client in the network ... There must be a better way 
+            // and send the reply now to the connected client ...
+            
+            byte nt = network->getNumberOfTransports();                 // #of networkinterfaces which have been instantiated
+            transportType *tt = network->getArrayOfTransportTypes();    // for each of the interfaces we know the transport type 
+            
+            for (byte i = 0; i < nt; i++)
+            {
+                switch(tt[i]) {
+                    case WIFI: {
+                        WiFiTransport *wt = static_cast<WiFiTransport *>(network->transports[i]);
+                        WiFiClient wtc = wt->getClient(m.client);
+                        if(wtc.connected()) {
+                            wtc.write(m.msg.c_str());
+                        } else {
+                            WARN(F("WiFi client not connected. Can't send reply" CR));
+                        }
+                        break;
+                    }
+                    case ETHERNET: {
+                        EthernetTransport *et = static_cast<EthernetTransport *>(network->transports[i]);
+                        EthernetClient etc = et->getClient(m.client);
+                        if (etc.connected()) { 
+                            etc.write(m.msg.c_str());
+                        } else {
+                            WARN(F("Ethernet client not connected. Can't send reply" CR));
+                        }
+                        break;
+                    }
+                    default: {
+                        ERR(F("Unknown transport protocol must be either WIFI or ETHERNET"));
+                        break;
+                    }
+                }
+            }
             break;
         } // Message comming back from the commandstation only valid if the sta is CS i.e. NW is the reciever 
           //send reply to client
