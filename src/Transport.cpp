@@ -146,6 +146,7 @@ void Transport<S,C,U>::tcpSessionHandler(S* server)
     // check for new client 
     if (client)
     {
+        active++;
         for (byte i = 0; i < maxConnections; i++)
         {
             if (!clients[i])
@@ -173,6 +174,7 @@ void Transport<S,C,U>::tcpSessionHandler(S* server)
             {
                 INFO(F("Disconnect client #%d" CR), i);
                 clients[i].stop();
+                active--;
                 connections[i].isProtocolDefined = false;
             }
         }

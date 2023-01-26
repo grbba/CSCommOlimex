@@ -354,7 +354,7 @@ appProtocol setAppProtocol(char a, char b, Connection *c)
 
 /**
  * @brief Parses the buffer to extract commands to be executed
- * 
+ * This all happens on the network station ( not the CS - the command station only gets valid CS commands)
  */
 void processStream(Connection *c, TransportProcessor *t)
 {
@@ -412,12 +412,13 @@ void processStream(Connection *c, TransportProcessor *t)
             t->command[k + 1] = '\0';
 
             TRC(F("Command: [%d:%s]" CR), _rseq[c->id], t->command);
-#ifdef DCCEX_ENABLED
 
-            sendToDCC(c, t, true); // send the command into the parser and replies back to the client
-#else
-            sendReply(c, t); // standalone version without CS-EX integration
-#endif
+            // Sanity check : the first character must be an < otherwise something is fishy ...
+            if (t->command[0] != '<') {
+                ERR(F("Wrong command syntax: missing '<'" CR));
+            } else { 
+                sendToDCC(c, t, true); // send the command into the queue to be send over to the CS
+            }
             _rseq[c->id]++;
             _nCmds++; 
             j = 0;

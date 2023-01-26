@@ -81,7 +81,8 @@ template <class S, class C, class U> class Transport: public AbstractTransport
 private:
     C                   clients[MAX_SOCK_NUM];          // Client objects created by the connectionPool
     Connection          connections[MAX_SOCK_NUM];      // All the connections build by the connectionPool
-    bool                connected = false;                          
+    byte                active = 0;                     // number of currently active connections (we may have wifi or eth setup but no client connected)
+    bool                connected = false;              // Transport is setup        
     TransportProcessor* t;                              // pointer to the object which handles the incomming/outgoing flow
 
     void udpHandler(U* udp);                            // Reads from a Udp socket - todo add incomming queue for processing when the flow is faster than we can process commands
@@ -107,6 +108,9 @@ public:
 
     bool isConnected() {
         return connected;
+    }
+    byte getActive() {
+        return active;
     }
 
     Transport<S,C,U>();
