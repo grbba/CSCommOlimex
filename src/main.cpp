@@ -63,7 +63,7 @@ void setup()
   INFO(F("Opening serial connection to the CommandStation ..." CR));
 
   // create the connection to the Command station
-  DCCI.setup();  // just use the default values
+  DCCI.setup(_NWSTA);  // set up as Network station just use the default values
 
 
   // open the connection to the "outside world" over Ethernet (cabled) or WiFi (wireless) 

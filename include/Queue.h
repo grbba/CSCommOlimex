@@ -37,8 +37,10 @@ private:
   T queue_[S];
   size_t head_;
   size_t tail_;
+  const size_t capacity_ = S;
 
 public:
+
   Queue() : head_(0), tail_(0) {}
 
   bool isEmpty() const
@@ -83,20 +85,36 @@ public:
       return queue_[head_];
   }
 
+/**
+ * @brief print function to be done; more precisley its aimed at debugging and dispaying 
+ * rather than printing to any stream
+ */
   void print() const
   {
     size_t idx = head_;
-    // std::cout << "start " << idx << CR;
+    TRC(F("Printing queue" CR));
     while (idx != tail_)
     {
       // print some info here of the queue :: needs a serializer of the content
       idx = (idx + 1) % S;
     }
   }
-
+/**
+   * @brief returns current size of the queue
+   * 
+   * @return size_t 
+   */
   size_t size() const
   {
     return (tail_ + S - head_) % S;
+  }
+/**
+ * @brief returns the number of elements with which the Queue was initalized @compiletime
+ * 
+ * @return size_t 
+ */
+  size_t capacity() const {
+    return capacity_;
   }
 };
 
