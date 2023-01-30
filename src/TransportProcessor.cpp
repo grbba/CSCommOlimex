@@ -377,12 +377,18 @@ void processStream(Connection *c, TransportProcessor *t)
     // check if there is again an overflow and copy if needed
     if ((i = strlen((char *)_buffer)) == MAX_ETH_BUFFER - 1)
     {
-        // TRC(F("Possible overflow situation detected: %d "), i);
+        TRC(F("Possible overflow situation detected: %d "), i);
         j = i;
+        TRC(F("> init search index %d" CR), i);
         while (_buffer[i] != c->delimiter)
         {
             i--;
+            TRC(F("> search index %d" CR), i);
+            if (i <= 0) {
+               TRC(F("No JMRI delimiter found; wrong command"));
+            } 
         }
+
         i++; // start of the buffer to copy
         l = i;
         k = j - i; // length to copy
