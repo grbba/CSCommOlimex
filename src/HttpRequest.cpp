@@ -16,7 +16,7 @@
  */
 
 #include <Arduino.h>
-#include <DIAG.h>
+#include <DCSIlog.h>
 
 #include "HttpRequest.h"
 #include "NetworkInterface.h"

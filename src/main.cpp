@@ -18,9 +18,11 @@
  */
 
 #include <Arduino.h>
-#include <DIAG.h>
 
-#include "DccExInterface.h"
+#include <DccExInterface.h>
+#include <DCSIlog.h>
+#include <DCSIconfig.h>
+
 #include "freeMemory.h"
 #include "NetworkInterface.h"
 
@@ -50,9 +52,10 @@ void httpRequestHandler(ParsedRequest *req, Client* client) {
 
 void setup()
 {
+  Serial.begin(115200);   
   delay(2000);
-  Log.begin(LOG_LEVEL_TRACE, &Serial, false); // Start logging subsystem
-  Serial.begin(115200);                       // Start the serial connection for the Serial monitor / uploads etc ...
+  dccLog.begin(LOG_LEVEL_TRACE, &Serial, false); // Start logging subsystem
+                              // Start the serial connection for the Serial monitor / uploads etc ...
 
   INFO(F("DCC++ EX NetworkInterface Standalone" CR));
 
@@ -71,7 +74,7 @@ void setup()
   nwi1.setup(ETHERNET, TCP);                        // ETHERNET/TCP on Port 2560 
   // nwi2.setup(ETHERNET, TCP, 23);                 // ETHERNET/TCP on Port 23 for the CLI
   // nwi1.setup(ETHERNET, TCP, 8888);               // ETHERNET/TCP on Port 8888
-  nwi2.setup(WIFI, TCP);                            // WIFI/TCP on Port 2560
+  // nwi2.setup(WIFI, TCP);                            // WIFI/TCP on Port 2560
   // nwi1.setHttpCallback(httpRequestHandler);      // HTTP callback
 
   INFO(F("Network Setup done ...\n"));
@@ -91,6 +94,7 @@ void doOnce(HardwareSerial *sp) {
         m.mid = 101;
         m.p = 1;
         m.msg = s;
+        m.sta = _NWSTA;
         MsgPacketizer::send(*sp, 0x34, m);
         done = true;
     }

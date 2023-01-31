@@ -19,7 +19,7 @@
 
 #include <Arduino.h>
 #include <Config.h>
-#include <DIAG.h>
+#include <DCSIlog.h>
 
 // #include "NetworkDiag.h"
 #include "NetworkInterface.h"
@@ -103,8 +103,7 @@ void sendJmriToDCC(Connection *c, TransportProcessor *t, bool blocking)
     // hasn't been disconneced - there seems 
 
     INFO(F("Sending JMRI commands to the Commandstation" CR));
-
-    DCCI.queue(c->id, 0, &t->command[0]);  // queued to be send over 
+    DCCI.queue(c->id, static_cast<csProtocol>(_DCCEX), &t->command[0]);  // queued to be send over 
 
 
 #ifdef CS_ENABLED

@@ -19,7 +19,7 @@
  */
 
 #include "RingStream.h"
-#include "DIAG.h"
+#include "DCSIlog.h"
 
 RingStream::RingStream( const uint16_t len)
 {

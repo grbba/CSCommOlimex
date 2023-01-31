@@ -18,7 +18,7 @@
  */
 
 #include <Arduino.h>
-#include <DIAG.h>
+#include <DCSIlog.h>
 
 #ifdef DCCEX_ENABLED
 #include "RingStream.h"

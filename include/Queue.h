@@ -1,7 +1,7 @@
 /**
  * @file Queue.h
  * @author Gregor Baues
- * @brief Queue datastructure implementation based on compile time allocated memeory. 
+ * @brief Queue datastructure implementation based on compile time allocated memeory.
  * Size of the queue is part of the template
  * @date 2023-01-13
  *
@@ -27,7 +27,8 @@
 #define ARDUINO_QUEUE_H
 
 #include <Arduino.h>
-#include <DIAG.h>
+#include <DCSIconfig.h>
+#include <DCSIlog.h>
 
 // Queue capacity is S - 1
 template <typename T, size_t S>
@@ -85,10 +86,10 @@ public:
       return queue_[head_];
   }
 
-/**
- * @brief print function to be done; more precisley its aimed at debugging and dispaying 
- * rather than printing to any stream
- */
+  /**
+   * @brief print function to be done; more precisley its aimed at debugging and dispaying
+   * rather than printing to any stream
+   */
   void print() const
   {
     size_t idx = head_;
@@ -99,21 +100,22 @@ public:
       idx = (idx + 1) % S;
     }
   }
-/**
+  /**
    * @brief returns current size of the queue
-   * 
-   * @return size_t 
+   *
+   * @return size_t
    */
   size_t size() const
   {
     return (tail_ + S - head_) % S;
   }
-/**
- * @brief returns the number of elements with which the Queue was initalized @compiletime
- * 
- * @return size_t 
- */
-  size_t capacity() const {
+  /**
+   * @brief returns the number of elements with which the Queue was initalized @compiletime
+   *
+   * @return size_t
+   */
+  size_t capacity() const
+  {
     return capacity_;
   }
 };
