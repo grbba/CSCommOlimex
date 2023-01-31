@@ -57,12 +57,22 @@ struct AbstractTransport {
  */
 class DCCNetwork {
     private:
-        byte _tCounter = 0;
+        byte _tCounter = 0;                                 // number of initalized transports
         transportType _t[MAX_INTERFACES];
+        // AbstractTransport *transports[MAX_INTERFACES];
+
     public: 
         AbstractTransport *transports[MAX_INTERFACES];
-
-        byte add(AbstractTransport* t, transportType _t);
+        byte add(AbstractTransport* t, transportType _t);   // add a transport to the network
+        byte getNumberOfTransports() {
+            return _tCounter;
+        }
+        transportType *getArrayOfTransportTypes() {
+            return _t;
+        }
+        AbstractTransport *getArrayOfTransports() {
+            return *transports;
+        }
         void loop();
 };
 
@@ -76,11 +86,16 @@ class NetworkInterface
 private:
     HttpCallback httpCallback;
     transportType t;
+    static DCCNetwork _dccNet;
 
 public:
 
     void setHttpCallback(HttpCallback callback);
     HttpCallback getHttpCallback();
+
+    static DCCNetwork *getDCCNetwork() {
+        return &_dccNet;
+    }
 
     void setup(transportType t = ETHERNET, protocolType p = TCP, uint16_t port = LISTEN_PORT);                                                     // defaults for all as above plus CABLE (i.e. using EthernetShield ) as default
     static void loop(); 
@@ -88,5 +103,7 @@ public:
     NetworkInterface();
     ~NetworkInterface();
 };
+
+// extern DCCNetwork _dccNet;
 
 #endif

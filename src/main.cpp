@@ -1,5 +1,5 @@
-/*
- * © 2020 Gregor Baues. All rights reserved.
+/**
+ * © 2020,2023 Gregor Baues. All rights reserved.
  *  
  * This is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the 
@@ -18,9 +18,11 @@
  */
 
 #include <Arduino.h>
-#include <DIAG.h>
 
-#include "DccExInterface.h"
+#include <DccExInterface.h>
+#include <DCSIlog.h>
+#include <DCSIconfig.h>
+
 #include "freeMemory.h"
 #include "NetworkInterface.h"
 
@@ -50,9 +52,10 @@ void httpRequestHandler(ParsedRequest *req, Client* client) {
 
 void setup()
 {
+  Serial.begin(115200);   
   delay(2000);
-  Log.begin(LOG_LEVEL_TRACE, &Serial, false); // Start logging subsystem
-  Serial.begin(115200);                       // Start the serial connection for the Serial monitor / uploads etc ...
+  dccLog.begin(LOG_LEVEL_TRACE, &Serial, false); // Start logging subsystem
+                              // Start the serial connection for the Serial monitor / uploads etc ...
 
   INFO(F("DCC++ EX NetworkInterface Standalone" CR));
 
@@ -63,23 +66,19 @@ void setup()
   INFO(F("Opening serial connection to the CommandStation ..." CR));
 
   // create the connection to the Command station
-  DCCI.setup();  // just use the default values
-
+  DCCI.setup(_NWSTA);  // set up as Network station just use the default values
 
   // open the connection to the "outside world" over Ethernet (cabled) or WiFi (wireless) 
-
   // nwi1.setup(ETHERNET, UDPR);                    // ETHERNET/UDP on Port 2560 
   // nwi2.setup(ETHERNET, UDPR, 8888);              // ETHERNET/UDP on Port 8888 
   nwi1.setup(ETHERNET, TCP);                        // ETHERNET/TCP on Port 2560 
   // nwi2.setup(ETHERNET, TCP, 23);                 // ETHERNET/TCP on Port 23 for the CLI
   // nwi1.setup(ETHERNET, TCP, 8888);               // ETHERNET/TCP on Port 8888
-  // nwi2.setup(WIFI, TCP);                         // WIFI/TCP on Port 2560
+  // nwi2.setup(WIFI, TCP);                            // WIFI/TCP on Port 2560
   // nwi1.setHttpCallback(httpRequestHandler);      // HTTP callback
 
   INFO(F("Network Setup done ...\n"));
   INFO(F("Free RAM after network init: [%d]\n"),freeMemory());
-
-  // printStats();
 
   // (2) End starting NetworkInterface
 
@@ -95,6 +94,7 @@ void doOnce(HardwareSerial *sp) {
         m.mid = 101;
         m.p = 1;
         m.msg = s;
+        m.sta = _NWSTA;
         MsgPacketizer::send(*sp, 0x34, m);
         done = true;
     }

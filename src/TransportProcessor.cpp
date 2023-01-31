@@ -19,7 +19,7 @@
 
 #include <Arduino.h>
 #include <Config.h>
-#include <DIAG.h>
+#include <DCSIlog.h>
 
 // #include "NetworkDiag.h"
 #include "NetworkInterface.h"
@@ -65,7 +65,7 @@ void dumpRingStreamBuffer(byte *b, int len)
 
 void sendWiThrottleToDCC(Connection *c, TransportProcessor *t, bool blocking)
 {
-    INFO(F("sendWiThrottle: Can not send Withrottle commands to the command station" CR));
+    INFO(F("sendWiThrottle: Can not send yet Withrottle commands to the command station" CR));
 
 #ifdef WITHROTTLE_ENABLED
     
@@ -103,8 +103,8 @@ void sendJmriToDCC(Connection *c, TransportProcessor *t, bool blocking)
     // hasn't been disconneced - there seems 
 
     INFO(F("Sending JMRI commands to the Commandstation" CR));
+    DCCI.queue(c->id, static_cast<csProtocol>(_DCCEX), &t->command[0]);  // queued to be send over 
 
-    DCCI.queue(c->id, 0, &t->command[0]);  // queued to be send over 
 
 #ifdef CS_ENABLED
     MemStream streamer((byte *)t->command, MAX_ETH_BUFFER, MAX_ETH_BUFFER, true);
@@ -353,7 +353,7 @@ appProtocol setAppProtocol(char a, char b, Connection *c)
 
 /**
  * @brief Parses the buffer to extract commands to be executed
- * 
+ * This all happens on the network station ( not the CS - the command station only gets valid CS commands)
  */
 void processStream(Connection *c, TransportProcessor *t)
 {
@@ -376,12 +376,18 @@ void processStream(Connection *c, TransportProcessor *t)
     // check if there is again an overflow and copy if needed
     if ((i = strlen((char *)_buffer)) == MAX_ETH_BUFFER - 1)
     {
-        // TRC(F("Possible overflow situation detected: %d "), i);
+        TRC(F("Possible overflow situation detected: %d "), i);
         j = i;
+        TRC(F("> init search index %d" CR), i);
         while (_buffer[i] != c->delimiter)
         {
             i--;
+            TRC(F("> search index %d" CR), i);
+            if (i <= 0) {
+               TRC(F("No JMRI delimiter found; wrong command"));
+            } 
         }
+
         i++; // start of the buffer to copy
         l = i;
         k = j - i; // length to copy
@@ -411,12 +417,13 @@ void processStream(Connection *c, TransportProcessor *t)
             t->command[k + 1] = '\0';
 
             TRC(F("Command: [%d:%s]" CR), _rseq[c->id], t->command);
-#ifdef DCCEX_ENABLED
 
-            sendToDCC(c, t, true); // send the command into the parser and replies back to the client
-#else
-            sendReply(c, t); // standalone version without CS-EX integration
-#endif
+            // Sanity check : the first character must be an < otherwise something is fishy ...
+            if (t->command[0] != '<') {
+                ERR(F("Wrong command syntax: missing '<'" CR));
+            } else { 
+                sendToDCC(c, t, true); // send the command into the queue to be send over to the CS
+            }
             _rseq[c->id]++;
             _nCmds++; 
             j = 0;

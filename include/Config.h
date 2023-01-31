@@ -21,7 +21,7 @@
 #define Config_h
 
 #include <Arduino.h>
-#include <DIAG.h>
+#include <DCSIlog.h>
 
 
 /**

@@ -18,7 +18,7 @@
  */
 
 #include <Arduino.h>
-#include <DIAG.h>
+#include <DCSIlog.h>
 
 #ifdef DCCEX_ENABLED
 #include "RingStream.h"
@@ -31,9 +31,6 @@
 extern bool diagNetwork;
 extern uint8_t diagNetworkClient;
 
-typedef WiFiServer EthernetServer;
-typedef WiFiUDP EthernetUDP;
-typedef WiFiClient EthernetClient;
 
 template<class S, class C, class U> 
 bool Transport<S,C,U>::setup(NetworkInterface *nw) {
@@ -145,14 +142,11 @@ void Transport<S,C,U>::tcpSessionHandler(S* server)
 {
     // get client from the server
     C client = server->accept();
-    
-    if(client != C{}) {
-        
-    }
 
     // check for new client 
     if (client)
     {
+        active++;
         for (byte i = 0; i < maxConnections; i++)
         {
             if (!clients[i])
@@ -180,13 +174,8 @@ void Transport<S,C,U>::tcpSessionHandler(S* server)
             {
                 INFO(F("Disconnect client #%d" CR), i);
                 clients[i].stop();
+                active--;
                 connections[i].isProtocolDefined = false;
-
-                // if (diagNetworkClient == i && diagNetwork) 
-                // {
-                //    diagNetwork = false;
-                //    NetworkDiag::resetDiagOut();
-                // }
             }
         }
     }
@@ -194,8 +183,10 @@ void Transport<S,C,U>::tcpSessionHandler(S* server)
 
 template<class S, class C, class U> 
 Transport<S,C,U>::Transport(){}
+
 template<class S, class C, class U> 
 Transport<S,C,U>::~Transport(){}
+
 
 // explicitly instatiate to get the relevant copies for ethernet / wifi build @compile time
 template class Transport<EthernetServer,EthernetClient,EthernetUDP>;

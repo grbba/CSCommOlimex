@@ -28,6 +28,13 @@
 #include "NetworkInterface.h"
 
 
+// on the ESP32 there is no disticinction of both
+
+typedef WiFiServer EthernetServer;
+typedef WiFiUDP EthernetUDP;
+typedef WiFiClient EthernetClient;
+
+
 typedef enum
 {
     DCCEX,      // if char[0] = < opening bracket the client should be a JMRI / DCC EX client_h
@@ -74,7 +81,8 @@ template <class S, class C, class U> class Transport: public AbstractTransport
 private:
     C                   clients[MAX_SOCK_NUM];          // Client objects created by the connectionPool
     Connection          connections[MAX_SOCK_NUM];      // All the connections build by the connectionPool
-    bool                connected = false;                          
+    byte                active = 0;                     // number of currently active connections (we may have wifi or eth setup but no client connected)
+    bool                connected = false;              // Transport is setup        
     TransportProcessor* t;                              // pointer to the object which handles the incomming/outgoing flow
 
     void udpHandler(U* udp);                            // Reads from a Udp socket - todo add incomming queue for processing when the flow is faster than we can process commands
@@ -94,14 +102,23 @@ public:
 
     bool setup(NetworkInterface* nwi);      // we get the callbacks from the NetworkInterface 
     void loop(); 
+    C getClient(int c) {
+        return clients[c];
+    }
 
     bool isConnected() {
         return connected;
+    }
+    byte getActive() {
+        return active;
     }
 
     Transport<S,C,U>();
     ~Transport<S,C,U>();
     
 };
+
+typedef Transport<EthernetServer,EthernetClient,EthernetUDP>  EthernetTransport;
+typedef Transport<WiFiServer, WiFiClient, WiFiUDP> WiFiTransport;
 
 #endif // !Transport_h

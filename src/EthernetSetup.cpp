@@ -18,7 +18,7 @@
  */
 
 #include <Arduino.h>
-#include <DIAG.h>
+#include <DCSIlog.h>
 #include <WiFi.h>
 
 #include "EthernetSetup.h"

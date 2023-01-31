@@ -18,7 +18,7 @@
  */
 
 #include <Arduino.h>
-#include <DIAG.h>
+#include <DCSIlog.h>
 
 
 #include "NetworkInterface.h"
@@ -29,7 +29,7 @@
 Transport<WiFiServer, WiFiClient, WiFiUDP> *wifiTransport;
 Transport<EthernetServer, EthernetClient, EthernetUDP> *ethernetTransport;
 
-DCCNetwork _dccNet;
+DCCNetwork NetworkInterface::_dccNet;
 
 void DCCNetwork::loop()
 {
