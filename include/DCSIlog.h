@@ -61,11 +61,20 @@ private:
     Print *_logOutput;
     int ramLowWatermark = __INT_MAX__; // replaced on first loop
     char pBuffer[20];                  // print buffer
+    int _loglevel = LOG_LEVEL_TRACE;   // loglevels as of ArduinoLog;
 public:
     void begin(int level, Print *output, bool showLevel = true)
     {
         _logOutput = output;
         Logging::begin(level, output, showLevel);
+    }
+
+    void setLogLevel(int level) {
+        _loglevel = level;
+    }
+    
+    int getLogLevel() {
+        return _loglevel;  
     }
 
     void printLogLevel(int logLevel)

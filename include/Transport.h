@@ -40,7 +40,9 @@ typedef enum
     DCCEX,      // if char[0] = < opening bracket the client should be a JMRI / DCC EX client_h
     WITHROTTLE, //
     HTTP,       // If char[0] = G || P || D; if P then char [1] = U || O || A
-    N_DIAG,     // '#' send form a telnet client as FIRST message will then reroute all DIAG messages to that client whilst being able to send jmri type commands
+    MQTT,       // The NW station can also serve as MQTT endpoint 
+    CTRL,       // '#' send form a client contains commands for the "admin" of the
+                // CS suchas setting loglevels or the final client id who shall recieve debug/trace messages or recieve DIAG messages
     UNKNOWN_PROTOCOL
 } appProtocol;
 
@@ -58,7 +60,8 @@ struct Connection
 // ENDISSUE
     char overflow[MAX_OVERFLOW];            // idem
     appProtocol p;                          // dynamically determined upon message reception; first message wins
-    char delimiter = '\0';                  // idem
+    char start_delimiter = '\0';            // start end delimiters < > for DCCEX cmds or ( ) for CTRL commands
+    char end_delimiter = '\0';              // idem
     bool isProtocolDefined = false;         // idem
     appProtocolCallback appProtocolHandler; // idem
 };

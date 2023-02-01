@@ -44,7 +44,7 @@ uint16_t _sseq[MAX_SOCK_NUM] = {0}; // sequence number for replies send per conn
 uint16_t _pNum = 0;                 // number of total packets recieved
 unsigned int _nCmds = 0;            // total number of commands processed
 
-char protocolName[5][11] = {"JMRI", "WITHROTTLE", "HTTP", "DIAG", "UNKNOWN"}; // change for Progmem
+char protocolName[6][11] = {"JMRI", "WITHROTTLE", "HTTP", "MQTT", "CTRL", "UNKNOWN"}; // change for Progmem
 
 bool diagNetwork = false;      // if true diag data will be send to the connected telnet client
 uint8_t diagNetworkClient = 0; // client id for diag output
@@ -159,7 +159,7 @@ void sendToDCC(Connection *c, TransportProcessor *t, bool blocking)
         sendJmriToDCC(c, t, blocking);
         break;
     }
-    case N_DIAG:
+    case CTRL:
     case HTTP:
     case UNKNOWN_PROTOCOL:
     {
@@ -321,23 +321,15 @@ appProtocol setAppProtocol(char a, char b, Connection *c)
     case '<':
     {
         p = DCCEX;
+        c->start_delimiter = '<';
         break;
     }
-    case '#':
+    case '(':
     {
-
-#ifdef NDIAG_ENABLED  // that only works if the code would run on the 
-        // CS itself. need to see if we can minimal chnage the Dcc-EX cs code 
-
-        /** @todo fix network diag */
-        p = DCCEX;
-        INFO(F("\nDCC-EX diagnostics routed to network client"));
-        NetworkDiag::setDiagOut(c);
-        diagNetwork = true;
-        diagNetworkClient = c->id;
-#else   
-    INFO(F("Sending Diagnostics to a network client is disabled" CR ));
-#endif
+        // sending ctrl commands to the CommandStation
+        // we need to check validity here
+        p = CTRL;
+        c->start_delimiter = '(';
         break;
     }
     default:
@@ -379,7 +371,7 @@ void processStream(Connection *c, TransportProcessor *t)
         TRC(F("Possible overflow situation detected: %d "), i);
         j = i;
         TRC(F("> init search index %d" CR), i);
-        while (_buffer[i] != c->delimiter)
+        while (_buffer[i] != c->end_delimiter)
         {
             i--;
             TRC(F("> search index %d" CR), i);
@@ -411,7 +403,7 @@ void processStream(Connection *c, TransportProcessor *t)
     {
         // DBG(F("l: %d - k: %d - i: %d - %c"), l, k, i, _buffer[i]);
         t->command[k] = _buffer[i];
-        if (_buffer[i] == c->delimiter)
+        if (_buffer[i] == c->end_delimiter)
         { // closing bracket need to fix if there is none before an opening bracket ?
 
             t->command[k + 1] = '\0';
@@ -419,8 +411,8 @@ void processStream(Connection *c, TransportProcessor *t)
             TRC(F("Command: [%d:%s]" CR), _rseq[c->id], t->command);
 
             // Sanity check : the first character must be an < otherwise something is fishy ...
-            if (t->command[0] != '<') {
-                ERR(F("Wrong command syntax: missing '<'" CR));
+            if (t->command[0] != c->start_delimiter) {
+                ERR(F("Wrong command syntax: missing %c" CR), c->start_delimiter);
             } else { 
                 sendToDCC(c, t, true); // send the command into the queue to be send over to the CS
             }
@@ -455,7 +447,6 @@ void echoProcessor(Connection *c, TransportProcessor *t)
         c->isProtocolDefined = false; // reset the protocol to not defined so that we can recover the next time
     }
 }
-
 void jmriProcessor(Connection *c, TransportProcessor *t)
 {
     TRC(F("Processing JMRI ..." CR));
@@ -472,7 +463,6 @@ void withrottleProcessor(Connection *c, TransportProcessor *t)
  * 
  * @param c    Pointer to the connection struct contining relevant information handling the data from that connection
  */
-
 void TransportProcessor::readStream(Connection *c, bool read)
 {
     int count = 0;
@@ -491,18 +481,23 @@ void TransportProcessor::readStream(Connection *c, bool read)
     {
         c->p = setAppProtocol(buffer[0], buffer[1], c);
         c->isProtocolDefined = true;
+
         switch (c->p)
         {
-        case N_DIAG:
+        case CTRL:{
+            c->end_delimiter =')';
+            c->appProtocolHandler = (appProtocolCallback)jmriProcessor;
+            break;
+        }
         case DCCEX:
         {
-            c->delimiter = '>';
+            c->end_delimiter = '>';
             c->appProtocolHandler = (appProtocolCallback)jmriProcessor;
             break;
         }
         case WITHROTTLE:
         {
-            c->delimiter = '\n';
+            c->end_delimiter = '\n';
             c->appProtocolHandler = (appProtocolCallback)withrottleProcessor;
             break;
         }

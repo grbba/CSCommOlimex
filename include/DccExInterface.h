@@ -62,6 +62,8 @@ typedef enum
     _CTRL,           // messages with _CTRL; used on both sides for controlling the env depending on the reciver msg will be processed differently  
     _REPLY,          // Message comming back from the commandstation after the execution of a command; all replys will be forwarded to the originating client
     _DIAG,           // Diagnostic messages comming back from the commandstation
+    _MQTT,           // MQTT messages they are handled only on the NW station just like HTTP
+    _HTTP,           //  HTTP endpoint
     UNKNOWN_CS_PROTOCOL  // DO NOT remove; used for sizing and testing conditions
 } csProtocol;
 
@@ -76,11 +78,11 @@ typedef enum
 #ifndef DCCI_CS
 #define HANDLER_INIT  \
    _tcsProtocolHandler handlers[UNKNOWN_CS_PROTOCOL] = \
-   {dccexHandler, notYetHandler, ctrlHandler, replyHandler, diagHandler}; 
+   {dccexHandler, notYetHandler, ctrlHandler, replyHandler, diagHandler, notYetHandler, notYetHandler}; 
 #else
 #define HANDLER_INIT  \
    _tcsProtocolHandler handlers[UNKNOWN_CS_PROTOCOL] = \
-   {dccexHandler, notYetHandler, ctrlHandler, notYetHandler, notYetHandler}; 
+   {dccexHandler, notYetHandler, ctrlHandler, notYetHandler, notYetHandler, notYetHandler, notYetHandler}; 
 #endif
 //  _DCCEX          _WITHROTTLE,     _CTRL       _REPLY         _DIAG
 
