@@ -20,22 +20,13 @@
 #include <Arduino.h>
 #include <Config.h>
 #include <DCSIlog.h>
+#include <DccExInterface.h>
 
-// #include "NetworkDiag.h"
+
 #include "NetworkInterface.h"
 #include "HttpRequest.h"
 #include "TransportProcessor.h"
-#include "DccExInterface.h"
 
-#ifdef DCCEX_ENABLED
-
-// #include "DCCEXParser.h"
-// #include "WiThrottle.h"  
-#include "MemStream.h"
-
-// DCCEXParser dccParser;
-
-#endif
 
 HttpRequest httpReq;
 
@@ -44,212 +35,10 @@ uint16_t _sseq[MAX_SOCK_NUM] = {0}; // sequence number for replies send per conn
 uint16_t _pNum = 0;                 // number of total packets recieved
 unsigned int _nCmds = 0;            // total number of commands processed
 
-char protocolName[6][11] = {"JMRI", "WITHROTTLE", "HTTP", "MQTT", "CTRL", "UNKNOWN"}; // change for Progmem
+// char protocolName[6][11] = {"JMRI", "WITHROTTLE", "HTTP", "MQTT", "CTRL", "UNKNOWN"}; // change for Progmem
 
 bool diagNetwork = false;      // if true diag data will be send to the connected telnet client
 uint8_t diagNetworkClient = 0; // client id for diag output
-
-#ifdef DCCEX_ENABLED
-
-void dumpRingStreamBuffer(byte *b, int len)
-{
-    TRC(F("RingStream buffer length [%d] out of [%d] bytes"), strlen((char *)b), len);
-    TRC(F("%s"), b);
-}
-
-// #define STBUFSIZE 512
-// uint8_t stbuf[STBUFSIZE] = {0};
-// MemStream streamer(&stbuf[0], STBUFSIZE); // buffer into which to feed the commands for handling; there will not be an immediate reply
-                          // as this is async written to another RingStream i.e. we have to see where in the loop we
-                          // generate the replies.
-
-void sendWiThrottleToDCC(Connection *c, TransportProcessor *t, bool blocking)
-{
-    INFO(F("sendWiThrottle: Can not send yet Withrottle commands to the command station" CR));
-
-#ifdef WITHROTTLE_ENABLED
-    
-    MemStream streamer((byte *)t->command, MAX_ETH_BUFFER, MAX_ETH_BUFFER, true);
-
-    char *_buffer = streamer();  // .getBuffer();
-    memset(_buffer, 0, 512);                         // clear out the _buffer
-    WiThrottle *wt = WiThrottle::getThrottle(c->id); // get a throttle for the Connection; will be created if it doesn't exist
-
-    TRC(F("WiThrottle [%x:%x] parsing: [%s]"), wt, _buffer, t->command);
-
-    wt->parse(&streamer, (byte *)t->command); // get the response; not all commands will produce a reply
-    if (streamer.count() != -1)
-    {
-        dumpRingStreamBuffer(_buffer, 512);
-        TRC(F("UDP %x"), t->udp);
-
-        if ( t->udp != 0) {
-            TRC(F("Sending UDP WiThrottle response ..."));
-            t->udp->beginPacket(t->udp->remoteIP(), t->udp->remotePort());
-            t->udp->write(_buffer, strlen((char *)_buffer));
-            t->udp->endPacket();
-        } else if (c->client->connected()) {
-            c->client->write(_buffer, strlen((char *)_buffer));
-        }
-    }
-    streamer.resetStream();
-#endif
-}
-
-void sendJmriToDCC(Connection *c, TransportProcessor *t, bool blocking)
-{
-    // push the thing to send into a queue which is then picked up by the CommandstationController to be send over
-    // the csctrl will recieve back the reply and reply to the appropriate client if the client still exist and 
-    // hasn't been disconneced - there seems 
-
-    INFO(F("Sending JMRI commands to the Commandstation" CR));
-    DCCI.queue(c->id, static_cast<csProtocol>(_DCCEX), &t->command[0]);  // queued to be send over 
-
-
-#ifdef CS_ENABLED
-    MemStream streamer((byte *)t->command, MAX_ETH_BUFFER, MAX_ETH_BUFFER, true);
-
-    TRC(F("DCC parsing: [%s]"), t->command);
-    // as we use buffer for recv and send we have to reset the write position
-    streamer.setBufferContentPosition(0, 0);
-    //-------- in the parser things get executed on the Cs --------- //
-    // we give the streamer to the parser to get the reply back
-
-
-    dccParser.parse(&streamer, (byte *)t->command, blocking); // set to true to that the execution in DCC is sync
-
-    if (streamer.available() == 0)
-    {
-        TRC(F("No response"));
-    }
-    else
-    {
-        t->command[streamer.available()] = '\0'; // mark end of buffer, so it can be used as a string later
-        TRC(F("Response: %s"), t->command);
-        if (c->client->connected())
-        {
-            c->client->write((byte *)t->command, streamer.available());
-        }
-    }
-#endif
-}
-
-/**
- * @brief Sending a reply by using the StringFormatter (this will result in every byte send individually which may/will create an important Network overhead).
- * Here we hook back into the DCC code for actually processing the command using a DCCParser. Alternatively we could use MemeStream in order to build the entiere reply
- * before ending it.
- * 
- * @param stream    Actually the Client to whom to send the reply. As Clients implement Print this is working
- * @param t         TransportProcessor used for accessing the buffers to be send
- * @param blocking  if set to true will instruct the DCC code to not use the async callback functions
- */
-
-void sendToDCC(Connection *c, TransportProcessor *t, bool blocking)
-{
-
-    switch (c->p)
-    {
-    case WITHROTTLE:
-    {
-        sendWiThrottleToDCC(c, t, blocking);
-        break;
-    }
-    case DCCEX:
-    {
-        sendJmriToDCC(c, t, blocking);
-        break;
-    }
-    case CTRL:
-    case HTTP:
-    case UNKNOWN_PROTOCOL:
-    {
-        // we shall never get here they should have been caught before
-        break;
-    }
-    }
-}
-
-#else
-/**
- * @brief Sending a reply without going through the StringFormatter. Sends the reply in one go
- * 
- * @param client  Client who send the command to which the reply shall be send
- * @param command Command initaliy recieved to be echoed back 
- */
-void sendReply(Connection *c, TransportProcessor *t)
-{
-    byte reply[MAX_ETH_BUFFER];
-    byte *response;
-    char *number;
-    char *command = t->command;
-    char seqNumber[6];
-    int i = 0;
-
-    memset(reply, 0, MAX_ETH_BUFFER); // reset reply
-
-    // This expects messages to be send with a trailing sequence number <R 1 1 1:0>
-    // as of my stress test program to verify the arrival of messages
-
-    number = strrchr(command, ':'); // replace the int after the last ':' if number != 0
-    if (number != 0)
-    {
-        while (&command[i] != number)
-        { // copy command into the reply upto the last ':'
-            reply[i] = command[i];
-            i++;
-        }
-        strcat((char *)reply, ":");
-        itoa(_sseq[c->id], seqNumber, 10);
-        strcat((char *)reply, seqNumber);
-        strcat((char *)reply, ">");
-        response = reply;
-    }
-    else
-    {
-        response = (byte *)command;
-    }
-
-    TRC(F("Response: [%s]"), (char *)response);
-    if (c->client->connected())
-    {
-        c->client->write(response, strlen((char *)response));
-        _sseq[c->id]++;
-        TRC(F("send"));
-    }
-
-};
-#endif
-
-/**
- * @brief creates a HttpRequest object for the user callback. Some conditions apply esp reagrding the length of the items in the Request
- * can be found in @file HttpRequest.h 
- *  
- * @param client Client object from whom we receievd the data
- * @param c id of the Client object
- */
-void httpProcessor(Connection *c, TransportProcessor *t)
-{
-
-    if (httpReq.callback == 0)
-        return; // no callback i.e. nothing to do
-    /**
-     * @todo look for jmri formatted uris and execute those if there is no callback. If no command found ignore and 
-     * ev. send a 401 error back
-     */
-    uint8_t i, l = 0;
-    ParsedRequest preq;
-    l = strlen((char *)t->buffer);
-    for (i = 0; i < l; i++)
-    {
-        httpReq.parseRequest((char)t->buffer[i]);
-    }
-    if (httpReq.endOfRequest())
-    {
-        preq = httpReq.getParsedRequest();
-        httpReq.callback(&preq, c->client);
-        httpReq.resetRequest();
-    } // else do nothing and continue with the next packet
-}
 
 /**
  * @brief Set the App Protocol. The detection is done upon the very first message recieved. The client will then be bound to that protocol. Its very brittle 
@@ -258,11 +47,11 @@ void httpProcessor(Connection *c, TransportProcessor *t)
  * 
  * @param a First character of the recieved buffer upon first connection
  * @param b Second character of the recieved buffer upon first connection
- * @return appProtocol 
+ * @return csProtocol 
  */
-appProtocol setAppProtocol(char a, char b, Connection *c)
+csProtocol setAppProtocol(char a, char b, Connection *c)
 {
-    appProtocol p = UNKNOWN_PROTOCOL;
+    csProtocol p = UNKNOWN_CS_PROTOCOL;
     switch (a)
     {
     case 'G': // GET
@@ -270,18 +59,18 @@ appProtocol setAppProtocol(char a, char b, Connection *c)
     case 'O': // OPTIONS
     case 'T': // TRACE
     {
-        p = HTTP;
+        p = _HTTP;
         break;
     }
-    case 'D': // DELETE or D plux hex value
+    case 'D': // DELETE or D plus hex value
     {
         if (b == 'E')
         {
-            p = HTTP;
+            p = _HTTP;
         }
         else
         {
-            p = WITHROTTLE;
+            p = _WITHROTTLE;
         }
         break;
     }
@@ -289,11 +78,11 @@ appProtocol setAppProtocol(char a, char b, Connection *c)
     {
         if (b == 'T' || b == 'R')
         {
-            p = WITHROTTLE;
+            p = _WITHROTTLE;
         }
         else
         {
-            p = HTTP; // PUT / PATCH / POST
+            p = _HTTP; // PUT / PATCH / POST
         }
         break;
     }
@@ -301,11 +90,11 @@ appProtocol setAppProtocol(char a, char b, Connection *c)
     {
         if (b == 'U')
         {
-            p = WITHROTTLE;
+            p = _WITHROTTLE;
         }
         else
         {
-            p = HTTP; // HEAD
+            p = _HTTP; // HEAD
         }
         break;
     }
@@ -315,37 +104,28 @@ appProtocol setAppProtocol(char a, char b, Connection *c)
     case 'Q': // That doesn't make sense as it's the Q or close on app level
     case 'N':
     {
-        p = WITHROTTLE;
+        p = _WITHROTTLE;
         break;
     }
     case '<':
     {
-        p = DCCEX;
+        p = _DCCEX;   
         c->start_delimiter = '<';
-        break;
-    }
-    case '(':
-    {
-        // sending ctrl commands to the CommandStation
-        // we need to check validity here
-        p = CTRL;
-        c->start_delimiter = '(';
         break;
     }
     default:
     {
         // here we don't know
-        p = UNKNOWN_PROTOCOL;
+        p = UNKNOWN_CS_PROTOCOL;
         break;
     }
     }
-    INFO(F("Client speaks: [%s]" CR), protocolName[p]);
+    INFO(F("Client speaks: [%s]" CR), DCCI.decode(p));
     return p;
 }
 
 /**
- * @brief Parses the buffer to extract commands to be executed
- * This all happens on the network station ( not the CS - the command station only gets valid CS commands)
+ * @brief Parses the buffer to extract commands to be executed before being send to the CommandStation
  */
 void processStream(Connection *c, TransportProcessor *t)
 {
@@ -376,7 +156,7 @@ void processStream(Connection *c, TransportProcessor *t)
             i--;
             TRC(F("> search index %d" CR), i);
             if (i <= 0) {
-               TRC(F("No JMRI delimiter found; wrong command"));
+               TRC(F("No valid delimiter found; wrong command"));
             } 
         }
 
@@ -410,11 +190,19 @@ void processStream(Connection *c, TransportProcessor *t)
 
             TRC(F("Command: [%d:%s]" CR), _rseq[c->id], t->command);
 
-            // Sanity check : the first character must be an < otherwise something is fishy ...
+            // Sanity check : the first character must be an < otherwise something is fishy only if prootocol is JMRI
+            // if Withrottle something else applies and we need to check actually in a list of possible options
+            // cf setAppProtocol
             if (t->command[0] != c->start_delimiter) {
+
                 ERR(F("Wrong command syntax: missing %c" CR), c->start_delimiter);
+
             } else { 
-                sendToDCC(c, t, true); // send the command into the queue to be send over to the CS
+                if(t->command[1] == '!') {   // tag as ctrl command so no need to test for that on the CS
+                    c->p = _CTRL;
+                }
+                INFO(F("Queuing: %s - %s" CR), &t->command[0], DCCI.decode(c->p));
+                // DCCI.queue(c->id, c->p, &t->command[0]);
             }
             _rseq[c->id]++;
             _nCmds++; 
@@ -433,7 +221,10 @@ void processStream(Connection *c, TransportProcessor *t)
     INFO(F("[%d] Commands processed in [%s]uS\n"), _nCmds, time);
 }
 
+
 void echoProcessor(Connection *c, TransportProcessor *t)
+
+
 {
     byte reply[MAX_ETH_BUFFER];
 
@@ -454,8 +245,38 @@ void jmriProcessor(Connection *c, TransportProcessor *t)
 }
 void withrottleProcessor(Connection *c, TransportProcessor *t)
 {
-    TRC(F("Processing WiThrottle ..." CR));
-    processStream(c, t);
+    TRC(F("Processing WiThrottle ...to be done" CR));
+    // processStream(c, t);
+}
+/**
+ * @brief creates a HttpRequest object for the user callback. Some conditions apply esp reagrding the length of the items in the Request
+ * can be found in @file HttpRequest.h 
+ *  
+ * @param client Client object from whom we receievd the data
+ * @param c id of the Client object
+ */
+void httpProcessor(Connection *c, TransportProcessor *t)
+{
+
+    if (httpReq.callback == 0)
+        return; // no callback i.e. nothing to do
+    /**
+     * @todo look for jmri formatted uris and execute those if there is no callback. If no command found ignore and 
+     * ev. send a 401 error back
+     */
+    uint8_t i, l = 0;
+    ParsedRequest preq;
+    l = strlen((char *)t->buffer);
+    for (i = 0; i < l; i++)
+    {
+        httpReq.parseRequest((char)t->buffer[i]);
+    }
+    if (httpReq.endOfRequest())
+    {
+        preq = httpReq.getParsedRequest();
+        httpReq.callback(&preq, c->client);
+        httpReq.resetRequest();
+    } // else do nothing and continue with the next packet
 }
 
 /**
@@ -474,7 +295,7 @@ void TransportProcessor::readStream(Connection *c, bool read)
     } else {
         count = strlen((char *)buffer);
     }
-
+    
     // figure out which protocol
 
     if (!c->isProtocolDefined)
@@ -484,30 +305,25 @@ void TransportProcessor::readStream(Connection *c, bool read)
 
         switch (c->p)
         {
-        case CTRL:{
-            c->end_delimiter =')';
-            c->appProtocolHandler = (appProtocolCallback)jmriProcessor;
-            break;
-        }
-        case DCCEX:
+        case _DCCEX:
         {
             c->end_delimiter = '>';
             c->appProtocolHandler = (appProtocolCallback)jmriProcessor;
             break;
         }
-        case WITHROTTLE:
+        case _WITHROTTLE:
         {
             c->end_delimiter = '\n';
             c->appProtocolHandler = (appProtocolCallback)withrottleProcessor;
             break;
         }
-        case HTTP:
+        case _HTTP:
         {
             c->appProtocolHandler = (appProtocolCallback)httpProcessor;
             httpReq.callback = nwi->getHttpCallback();
             break;
         }
-        case UNKNOWN_PROTOCOL:
+        case UNKNOWN_CS_PROTOCOL:
         {
             INFO(F("Requests will not be handeled and packet echoed back" CR));
             c->appProtocolHandler = (appProtocolCallback)echoProcessor;
@@ -518,28 +334,20 @@ void TransportProcessor::readStream(Connection *c, bool read)
     _pNum++;
     IPAddress remote = c->client->remoteIP();
     INFO(F("Client #[%d] Received packet #[%d] of size:[%d] from [%d.%d.%d.%d]" CR), c->id, _pNum, count, remote[0], remote[1], remote[2], remote[3]);
-    buffer[count] = '\0'; // terminate the string properly
-    INFO(F("Packet: [%s]" CR), buffer);
+    
+    // Clean up if we recieve unwanted \n and/or \r characters at the end 
+    // e.g. terminal on MAC we get both on PacketSender as of confguration you get it or not
 
+    if (buffer[count] == '\r' || buffer[count] == '\n') buffer[count] = '\0';
+    if (buffer[count-1] == '\r' || buffer[count-1] == '\n') buffer[count-1] = '\0';
+    if (buffer[count-2] == '\r' || buffer[count-2] == '\n') buffer[count-2] = '\0';
+
+    // terminate the string Properly
+    buffer[count] = '\0'; 
+    INFO(F("Packet: [%s]" CR), buffer);
+    
     // chop the buffer into CS / WiThrottle commands || assemble command across buffer read boundaries
     c->appProtocolHandler(c, this);
-}
-
-
-/**
- * @brief Sending a reply by using the StringFormatter (this will result in every byte send individually which may/will create an important Network overhead).
- * Here we hook back into the DCC code for actually processing the command using a DCCParser. Alternatively we could use MemeStream in order to build the entiere reply
- * before ending it (cf. Scratch pad below)
- * 
- * @param stream    Actually the Client to whom to send the reply. As Clients implement Print this is working
- * @param command   The reply to be send ( echo as in sendReply() )
- * @param blocking  if set to true will instruct the DCC code to not use the async callback functions
- */
-void parse(Print *stream, byte *command, bool blocking)
-{
-    TRC(F("DCC parsing: [%s]"), command);
-    // echo back (as mock parser )
-    // StringFormatter::send(stream, F("reply to: %s"), command);
 }
 
 
