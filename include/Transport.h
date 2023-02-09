@@ -26,6 +26,7 @@
 
 #include "NetworkConfig.h"
 #include "NetworkInterface.h"
+// #include "DccExInterface.h"
 
 
 // on the ESP32 there is no disticinction of both
@@ -34,17 +35,17 @@ typedef WiFiServer EthernetServer;
 typedef WiFiUDP EthernetUDP;
 typedef WiFiClient EthernetClient;
 
-
 typedef enum
 {
-    DCCEX,      // if char[0] = < opening bracket the client should be a JMRI / DCC EX client_h
-    WITHROTTLE, //
-    HTTP,       // If char[0] = G || P || D; if P then char [1] = U || O || A
-    MQTT,       // The NW station can also serve as MQTT endpoint 
-    CTRL,       // '#' send form a client contains commands for the "admin" of the
-                // CS suchas setting loglevels or the final client id who shall recieve debug/trace messages or recieve DIAG messages
-    UNKNOWN_PROTOCOL
-} appProtocol;
+    _DCCEX,          //< > encoded
+    _WITHROTTLE,     // Withrottle 
+    _REPLY,          // Message comming back from the commandstation after the execution of a command; all replys will be forwarded to the originating client
+    _DIAG,           // Diagnostic messages comming back from the commandstation
+    _MQTT,           // MQTT messages they are handled only on the NW station just like HTTP
+    _HTTP,           //  HTTP endpoint
+    _CTRL,           // to be set when sending to the CS if the the msg send starts with "<!" avoids the need to do the check on the CS
+    UNKNOWN_CS_PROTOCOL  // DO NOT remove; used for sizing and testing conditions
+} csProtocol;
 
 // Needed forward declarations
 struct Connection;
@@ -59,16 +60,12 @@ struct Connection
     WiFiClient *client;                     // idem ... WiFiClient is used for all types of connections This was Client in short on the Arduino mega
 // ENDISSUE
     char overflow[MAX_OVERFLOW];            // idem
-    appProtocol p;                          // dynamically determined upon message reception; first message wins
-    char start_delimiter = '\0';            // start end delimiters < > for DCCEX cmds or ( ) for CTRL commands
+    csProtocol p;                           // dynamically determined upon message reception; first message wins
+    char start_delimiter = '\0';            // start end delimiters such as < > for various protocols
     char end_delimiter = '\0';              // idem
     bool isProtocolDefined = false;         // idem
     appProtocolCallback appProtocolHandler; // idem
 };
-
-/*
-int foo = Serial.onReceive(callback function); // thats how i shall get things back from the Mega ( just define the cb)
-*/
 
 /**
  * @brief The Transport class instatiates a either a Ethernet or WiFi abstraction level. This can be serial as well 

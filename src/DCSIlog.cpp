@@ -2,9 +2,9 @@
 #include <DCSIconfig.h>
 #include <StreamUtils.h>
 #include <MsgPacketizer.h>
-#include <DccExInterface.h>
 
 #ifdef DCCI_CS // only for the commandstation
+#include <DccExInterface.h>
 
 unsigned int FSHlength(const __FlashStringHelper * FSHinput) {
   PGM_P FSHinputPointer = reinterpret_cast<PGM_P>(FSHinput);

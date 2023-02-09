@@ -19,10 +19,7 @@
 
 #include <Arduino.h>
 #include <DCSIlog.h>
-
-#ifdef DCCEX_ENABLED
-#include "RingStream.h"
-#endif
+// #include <DccExInterface.h>
 
 #include "NetworkInterface.h"
 #include "Transport.h"

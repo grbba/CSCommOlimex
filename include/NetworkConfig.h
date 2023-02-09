@@ -32,8 +32,6 @@
  * 
  */
 
-// #define DCCEX_ENABLED      // uncomment to enable CS-EX integration; Commented will operate as standalone and only echo commands as replies
-
 /**
  * @brief Network operational configuration
  * 

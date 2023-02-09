@@ -24,22 +24,14 @@
 #include <ETH.h>
 #include <WiFi.h>
 
-#ifdef DCCEX_ENABLED
-    #include "RingStream.h"
-#endif
-
 #include "Transport.h"
 #include "NetworkConfig.h"
 #include "NetworkInterface.h"
-
+// #include "DccExInterface.h"
 
 class TransportProcessor
 {
 private:
-#ifdef DCCEX_ENABLED
-    void sendToDCC(Connection *c, TransportProcessor* t, bool blocking);
-#endif
-    
 
 public:
     UDP *udp;                                 // need to carry the single UDP server instance over to the processor for sending packest

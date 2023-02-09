@@ -207,7 +207,7 @@ void DccExInterface::loop()
 auto DccExInterface::decode(csProtocol p) -> const char *
 {
     // need to check if p is a valid enum value
-    if ((p > 4) || (p < 0))
+    if ((p >= UNKNOWN_CS_PROTOCOL) || (p < 0))
     {
         ERR(F("Cannot decode csProtocol %d returning unkown"), p);
         return csProtocolNames[UNKNOWN_CS_PROTOCOL];
@@ -224,7 +224,6 @@ auto DccExInterface::decode(comStation s) -> const char *
     }
     return comStationNames[s];
 }
-
 auto DccExInterface::dccexHandler(DccMessage m) -> void
 {
     INFO(F("Processing message from [%s]:[%s]" CR), DCCI.decode(static_cast<comStation>(m.sta)), m.msg.c_str());
@@ -235,11 +234,9 @@ auto DccExInterface::dccexHandler(DccMessage m) -> void
     TRC(F(" Memory ->" CR));
 };
 auto DccExInterface::wiThrottleHandler(DccMessage m) -> void{};
-
 auto DccExInterface::ctrlHandler(DccMessage m) -> void {
     INFO(F("Recieved from %s CTRL Message  %s" CR), DCCI.decode((comStation)m.sta),m.msg.c_str() );
 };
-
 auto DccExInterface::notYetHandler(DccMessage m) -> void
 {
     if (m.p == UNKNOWN_CS_PROTOCOL)

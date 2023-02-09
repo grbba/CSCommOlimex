@@ -19,7 +19,7 @@
 
 #include <Arduino.h>
 
-#include <DccExInterface.h>
+// #include <DccExInterface.h>
 #include <DCSIlog.h>
 #include <DCSIconfig.h>
 
@@ -66,7 +66,7 @@ void setup()
   INFO(F("Opening serial connection to the CommandStation ..." CR));
 
   // create the connection to the Command station
-  DCCI.setup(_NWSTA);  // set up as Network station just use the default values
+  // DCCI.setup(_NWSTA);  // set up as Network station just use the default values
 
   // open the connection to the "outside world" over Ethernet (cabled) or WiFi (wireless) 
   // nwi1.setup(ETHERNET, UDPR);                    // ETHERNET/UDP on Port 2560 
@@ -84,26 +84,26 @@ void setup()
 
 }
 
-bool done = false;
-DccMessage m;
-void doOnce(HardwareSerial *sp) {
-    if(!done) {
-      Serial.println("Sending test message to CS ...");
-      MsgPack::str_t s = MsgPack::str_t("test");
-        m.client = 10;
-        m.mid = 101;
-        m.p = 1;
-        m.msg = s;
-        m.sta = _NWSTA;
-        MsgPacketizer::send(*sp, 0x34, m);
-        done = true;
-    }
-}
+// bool done = false;
+// DccMessage m;
+// void doOnce(HardwareSerial *sp) {
+//     if(!done) {
+//       Serial.println("Sending test message to CS ...");
+//       MsgPack::str_t s = MsgPack::str_t("test");
+//         m.client = 10;
+//         m.mid = 101;
+//         m.p = 1;
+//         m.msg = s;
+//         m.sta = _NWSTA;
+//         MsgPacketizer::send(*sp, 0x34, m);
+//         done = true;
+//     }
+// }
 
 void loop()
 {
 
-doOnce(&Serial1); // send a test message to see if we have at leasta serial connection
+// doOnce(&Serial1); // send a test message to see if we have at leasta serial connection
 
 // Handle all the incomming/outgoing messages for the active interfaces
 // incomming : from the network to the ComStation and to the Network
@@ -114,7 +114,7 @@ NetworkInterface::loop();
 // e.g. config commands for the commandstation will be handled locally
 // other commands like <s> will be send to the Command station
 
-DCCI.loop();
+// DCCI.loop();
 
   
 // Optionally report any decrease in memory (will automatically trigger on first call)

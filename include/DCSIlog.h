@@ -22,7 +22,10 @@
 #include <Arduino.h>
 #include <ArduinoLog.h>
 #include <DCSIconfig.h>
+
+#ifdef DCC_CS
 #include "StringFormatter.h"
+#endif
 
 #if defined(__arm__)
 extern "C" char *sbrk(int);
@@ -55,7 +58,11 @@ static inline int freeMemory()
  * changing the ArduinoLog library itself
  * DCSI : DCC-EX Command Station Contol Interface DCSI
  */
+#ifdef DCC_CS
 class DCSILog : public Logging, StringFormatter
+#else
+class DCSILog : public Logging
+#endif
 {
 private:
     Print *_logOutput;

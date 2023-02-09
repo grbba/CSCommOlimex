@@ -29,9 +29,6 @@
  * 
  */
 
-#define DCCEX_ENABLED
-
-
 #define DCC_SSID  "DeepSpace"
 #define DCC_WPWD  "qsdfghjklm!"
 
