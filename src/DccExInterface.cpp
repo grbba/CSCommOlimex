@@ -128,8 +128,8 @@ void DccExInterface::queue(uint16_t c, csProtocol p, char *msg)
 
     INFO(F("Queuing [%d:%d:%s]:[%s]" CR), m.mid, m.client, decode((csProtocol)m.p), m.msg.c_str());
     // MsgPacketizer::send(Serial1, 0x12, m);
-
     outgoing->push(m);
+
     return;
 }
 /**
@@ -245,7 +245,7 @@ auto DccExInterface::notYetHandler(DccMessage m) -> void
     }
     else
     {
-        WARN(F("%s Message protocol not supported on %s; Message ignored"), DCCI.decode((csProtocol)m.p), DCCI.decode((comStation)m.sta));
+        WARN(F("%s Message protocol not supported on %s; Message ignored" CR), DCCI.decode((csProtocol)m.p), DCCI.decode((comStation)m.sta));
     }
     return;
 };

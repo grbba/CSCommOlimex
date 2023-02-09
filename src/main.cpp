@@ -19,7 +19,7 @@
 
 #include <Arduino.h>
 
-// #include <DccExInterface.h>
+#include <DccExInterface.h>
 #include <DCSIlog.h>
 #include <DCSIconfig.h>
 
@@ -66,7 +66,7 @@ void setup()
   INFO(F("Opening serial connection to the CommandStation ..." CR));
 
   // create the connection to the Command station
-  // DCCI.setup(_NWSTA);  // set up as Network station just use the default values
+  DCCI.setup(_NWSTA);  // set up as Network station just use the default values
 
   // open the connection to the "outside world" over Ethernet (cabled) or WiFi (wireless) 
   // nwi1.setup(ETHERNET, UDPR);                    // ETHERNET/UDP on Port 2560 
@@ -114,7 +114,7 @@ NetworkInterface::loop();
 // e.g. config commands for the commandstation will be handled locally
 // other commands like <s> will be send to the Command station
 
-// DCCI.loop();
+DCCI.loop();
 
   
 // Optionally report any decrease in memory (will automatically trigger on first call)

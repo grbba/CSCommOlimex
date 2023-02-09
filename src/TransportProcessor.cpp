@@ -113,6 +113,18 @@ csProtocol setAppProtocol(char a, char b, Connection *c)
         c->start_delimiter = '<';
         break;
     }
+#ifndef DCCI_CS
+    case '(':
+    {
+        // TODO got a command from the network client for the 
+        // network station e.g. list all clients, show version
+        // set log levels, route diagnostics to a aprticular client
+        // manage the LCD display etc... etc..
+        TRC(F("Contol messages for the NetworkStation aren't implemented yet"));
+        p = UNKNOWN_CS_PROTOCOL;
+        break;
+    }
+#endif
     default:
     {
         // here we don't know
@@ -200,9 +212,11 @@ void processStream(Connection *c, TransportProcessor *t)
             } else { 
                 if(t->command[1] == '!') {   // tag as ctrl command so no need to test for that on the CS
                     c->p = _CTRL;
+                } else {
+                    c->p = _DCCEX;
                 }
                 INFO(F("Queuing: %s - %s" CR), &t->command[0], DCCI.decode(c->p));
-                // DCCI.queue(c->id, c->p, &t->command[0]);
+                DCCI.queue(c->id, c->p, &t->command[0]);
             }
             _rseq[c->id]++;
             _nCmds++; 
@@ -345,7 +359,7 @@ void TransportProcessor::readStream(Connection *c, bool read)
     // terminate the string Properly
     buffer[count] = '\0'; 
     INFO(F("Packet: [%s]" CR), buffer);
-    
+
     // chop the buffer into CS / WiThrottle commands || assemble command across buffer read boundaries
     c->appProtocolHandler(c, this);
 }
