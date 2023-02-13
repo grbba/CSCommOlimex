@@ -29,8 +29,6 @@
 #include <DCSIlog.h>
 #include <CommandTokenizer.h>
 
-// #include <string.h>
-
 CommandTokenizer::scanState CommandTokenizer::stateStartScan() { 
                 CommandToken *ct;
                 ct = findScanType(*current);
@@ -93,7 +91,10 @@ CommandTokenizer::scanState CommandTokenizer::stateEndToken(char *scanBuffer, co
     }
     memset(buffer, 0, MAX_MESSAGE_SIZE); // clean the buffer
     strncpy(buffer, start, clen);
-    INFO(F("Queuing buffer %d %d %s" CR), (current == &scanBuffer[len]), clen, buffer);
+
+    // INFO(F("Callback for Queuing buffer %d %d %s" CR), (current == &scanBuffer[len]), clen, buffer);
+    callback(currentCmdType, buffer);
+
     if( current == &scanBuffer[len] ) {
         return(FINAL); // we have reached the end of the buffer;
     } else {
@@ -102,23 +103,23 @@ CommandTokenizer::scanState CommandTokenizer::stateEndToken(char *scanBuffer, co
         return(STARTSCAN);
     } 
 }
-void CommandTokenizer::scanCommands(char *in, const int inl) {
+void CommandTokenizer::scanCommands(char *in, const int inl, void(*cb)(scanType s, char *token)) {
 
     // all possible token i can find are listed in here
     // this needs to be completed when there are new tokens to be added
 
+    callback = cb;
     int len = inl + strlen(overflow);   // overall length we need overflow plus length of the incomming stream
     char scanBuffer[len];               // allocate the buffer for all of the content
 
     memset(scanBuffer, 0, len);                        // clean the content buffer
     strcat(scanBuffer, overflow);                      // copy the overflow into the buffer
     strcat(scanBuffer, in);                            // append the incomming buffer
-    memset(overflow, 0, MAX_MESSAGE_SIZE/2+1);         // clean the overflow buffer once it has been used
+    memset(overflow, 0, MAX_ETH_BUFFER/2);         // clean the overflow buffer once it has been used
 
     start = scanBuffer;                                // set start & end pointers
     current = scanBuffer;
 
-    char buffer[MAX_MESSAGE_SIZE] = {'\0'}; // this is for temp storage of the command to be send to the CS
     scanState state = STARTSCAN;
     
     // std::cout << "Scanning " << scanBuffer << std::endl;
@@ -215,7 +216,15 @@ void CommandTokenizer::scanCommands3(char *in, const int inl) {
 }
 */
 
+CommandTokenizer tokenizer = CommandTokenizer();
+
+// -------------------------------------------------------------------------------------------
+// FOR TESTING BELOW
+// -------------------------------------------------------------------------------------------
+
+/*
 CommandTokenizer parser;
+
 char stream[] = "sfs dq<! dia 2>Mx245_\n. <!! local 12>< hhh fo><bar me"; // this generates an overflow
 char stream2[] = "sfs dq>{hhh}Mx267ABC_\n"; // overflow test
 char stream3[] = "abcdefg"; //no command test
@@ -242,5 +251,5 @@ void CommandTokenizer::testScan() {
     parser.scanCommands(stream5, strlen(stream5));
 
 }
-
+*/
 
