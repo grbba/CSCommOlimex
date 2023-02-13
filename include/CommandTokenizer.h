@@ -1,5 +1,5 @@
 /**
- * @file DCSICommand.h
+ * @file CommandTokenizer.h
  * @author Gregor Baues
  * @brief 
  * @version 0.1
