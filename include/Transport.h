@@ -1,5 +1,5 @@
 /*
- * © 2020 Gregor Baues. All rights reserved.
+ * © 2020, 2023 Gregor Baues. All rights reserved.
  *  
  * This is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the 
@@ -56,15 +56,7 @@ using appProtocolCallback = void (*)(Connection* c, TransportProcessor* t);
 struct Connection
 {
     uint8_t id;                             // initalized when the pool is setup
-// MAYBE AN ISSUE it is strange that the ethernet and WiFi are all managed across the same objects ....
-    WiFiClient *client;                     // idem ... WiFiClient is used for all types of connections This was Client in short on the Arduino mega
-// ENDISSUE
-    char overflow[MAX_OVERFLOW];            // idem
-    csProtocol p;                           // dynamically determined upon message reception; first message wins
-    char start_delimiter = '\0';            // start end delimiters such as < > for various protocols
-    char end_delimiter = '\0';              // idem
-    bool isProtocolDefined = false;         // idem
-    appProtocolCallback appProtocolHandler; // idem
+    WiFiClient *client;                     // WiFiClient is used for all types of connections This was Client in short on the Arduino mega
 };
 
 /**

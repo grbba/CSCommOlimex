@@ -28,6 +28,7 @@
 
 #include <Arduino.h>
 #include <DCSIconfig.h>
+#include <NetworkConfig.h>
 #include <DCSIlog.h>
 
 
@@ -96,6 +97,8 @@ private:
     char *end;
     const char *tmp;
     scanType currentCmdType = UNDEFINED;
+    
+    void (*callback)(scanType s, char * buffer);
 
     char overflow[MAX_MESSAGE_SIZE/2] = {'\0'}; 
 
@@ -119,9 +122,10 @@ public:
         } // The char c never appears in any of the start_t arrays;
         return token[UNDEFINED];
     }
-    void scanCommands(char *in, const int len);
-    static void testScan();
+    void scanCommands(char *in, const int len, void (*handler)(scanType s, char * buffer) );
+    // static void testScan();
 };
 
+extern CommandTokenizer tokenizer;
 
 #endif 

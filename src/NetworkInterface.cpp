@@ -19,7 +19,6 @@
 
 #include <Arduino.h>
 #include <DCSIlog.h>
-
 #include "NetworkInterface.h"
 #include "Transport.h"
 #include "EthernetSetup.h"

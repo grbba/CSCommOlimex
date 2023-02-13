@@ -21,19 +21,17 @@
 #include <Config.h>
 #include <DCSIlog.h>
 #include <DccExInterface.h>
+#include <CommandTokenizer.h>
+#include <TransportProcessor.h>
 
-
-#include "NetworkInterface.h"
-#include "HttpRequest.h"
-#include "TransportProcessor.h"
-
+Connection *TransportProcessor::currentConnection;
 
 HttpRequest httpReq;
 
-uint16_t _rseq[MAX_SOCK_NUM] = {0}; // sequence number for packets recieved per connection
-uint16_t _sseq[MAX_SOCK_NUM] = {0}; // sequence number for replies send per connection
-uint16_t _pNum = 0;                 // number of total packets recieved
-unsigned int _nCmds = 0;            // total number of commands processed
+uint32_t _rseq[MAX_SOCK_NUM] = {0}; // sequence number for packets recieved per connection
+uint32_t _sseq[MAX_SOCK_NUM] = {0}; // sequence number for commands send to the Commandstation per connection
+uint32_t _pNum = 0;                 // number of total packets recieved
+
 
 // char protocolName[6][11] = {"JMRI", "WITHROTTLE", "HTTP", "MQTT", "CTRL", "UNKNOWN"}; // change for Progmem
 
@@ -41,263 +39,53 @@ bool diagNetwork = false;      // if true diag data will be send to the connecte
 uint8_t diagNetworkClient = 0; // client id for diag output
 
 /**
- * @brief Set the App Protocol. The detection is done upon the very first message recieved. The client will then be bound to that protocol. Its very brittle 
- * as e.g. The N message as first message for WiThrottle is not a requirement by the protocol; If any client talking Withrottle doesn't implement this the detection 
- * will default to JMRI. For HTTP we base this only on a subset of the HTTP verbs which can be used.
+ * @brief callback provided to the tokenizer
  * 
- * @param a First character of the recieved buffer upon first connection
- * @param b Second character of the recieved buffer upon first connection
- * @return csProtocol 
+ * @param s 
+ * @param token 
  */
-csProtocol setAppProtocol(char a, char b, Connection *c)
-{
-    csProtocol p = UNKNOWN_CS_PROTOCOL;
-    switch (a)
-    {
-    case 'G': // GET
-    case 'C': // CONNECT
-    case 'O': // OPTIONS
-    case 'T': // TRACE
-    {
-        p = _HTTP;
-        break;
-    }
-    case 'D': // DELETE or D plus hex value
-    {
-        if (b == 'E')
-        {
-            p = _HTTP;
-        }
-        else
-        {
-            p = _WITHROTTLE;
-        }
-        break;
-    }
-    case 'P':
-    {
-        if (b == 'T' || b == 'R')
-        {
-            p = _WITHROTTLE;
-        }
-        else
-        {
-            p = _HTTP; // PUT / PATCH / POST
-        }
-        break;
-    }
-    case 'H':
-    {
-        if (b == 'U')
-        {
-            p = _WITHROTTLE;
-        }
-        else
-        {
-            p = _HTTP; // HEAD
-        }
-        break;
-    }
-    case 'M':
-    case '*':
-    case 'R':
-    case 'Q': // That doesn't make sense as it's the Q or close on app level
-    case 'N':
-    {
-        p = _WITHROTTLE;
-        break;
-    }
-    case '<':
-    {
-        p = _DCCEX;   
-        c->start_delimiter = '<';
-        break;
-    }
-#ifndef DCCI_CS
-    case '(':
-    {
-        // TODO got a command from the network client for the 
-        // network station e.g. list all clients, show version
-        // set log levels, route diagnostics to a aprticular client
-        // manage the LCD display etc... etc..
-        TRC(F("Contol messages for the NetworkStation aren't implemented yet"));
-        p = UNKNOWN_CS_PROTOCOL;
-        break;
-    }
-#endif
-    default:
-    {
-        // here we don't know
-        p = UNKNOWN_CS_PROTOCOL;
-        break;
-    }
-    }
-    INFO(F("Client speaks: [%s]" CR), DCCI.decode(p));
-    return p;
-}
+void TransportProcessor::tokenHandler(scanType s, char *token) {
+    csProtocol p;
+    bool queue = false;
+    INFO(F("Handling token:%d:%s" CR), (int) s, token);
+    // currentConnection contains the connection from which the c$scanned stream has been recieved
+    switch(s) {
+        case DCCEX: {
 
-/**
- * @brief Parses the buffer to extract commands to be executed before being send to the CommandStation
- */
-void processStream(Connection *c, TransportProcessor *t)
-{
-    uint8_t i, j, k, l = 0;
-    uint8_t *_buffer = t->buffer;
-
-    TRC(F("Buffer: [%s]" CR), _buffer);
-    memset(t->command, 0, MAX_JMRI_CMD); // clear out the command
-
-    // copy overflow into the command
-    if ((i = strlen(c->overflow)) != 0)
-    {
-        // TRC(F("Copy overflow to command: %s"), c->overflow);
-        strncpy(t->command, c->overflow, i);
-        k = i;
-    }
-    // reset the overflow
-    memset(c->overflow, 0, MAX_OVERFLOW);
-
-    // check if there is again an overflow and copy if needed
-    if ((i = strlen((char *)_buffer)) == MAX_ETH_BUFFER - 1)
-    {
-        TRC(F("Possible overflow situation detected: %d "), i);
-        j = i;
-        TRC(F("> init search index %d" CR), i);
-        while (_buffer[i] != c->end_delimiter)
-        {
-            i--;
-            TRC(F("> search index %d" CR), i);
-            if (i <= 0) {
-               TRC(F("No valid delimiter found; wrong command"));
-            } 
-        }
-
-        i++; // start of the buffer to copy
-        l = i;
-        k = j - i; // length to copy
-
-        for (j = 0; j < k; j++, i++)
-        {
-            c->overflow[j] = _buffer[i];
-            // TRC(F("%d %d %d %c"),k,j,i, buffer[i]);
-        }
-        _buffer[l] = '\0'; // terminate buffer just after the last '>'
-        // TRC(F("New buffer: [%s] New overflow: [%s]"), (char*) buffer, c->overflow );
-    }
-    // breakup the buffer using its changed length
-    i = 0;
-    k = strlen(t->command); // current length of the command buffer telling us where to start copy in
-    l = strlen((char *)_buffer);
-    // DBG(F("Command buffer cid[%d]: [%s]:[%d:%d:%d:%x]"), c->id,  t->command, i, l, k, c->delimiter );
-    unsigned long _startT = micros();
-    _nCmds = 0;
-    while (i < l)
-    {
-        // DBG(F("l: %d - k: %d - i: %d - %c"), l, k, i, _buffer[i]);
-        t->command[k] = _buffer[i];
-        if (_buffer[i] == c->end_delimiter)
-        { // closing bracket need to fix if there is none before an opening bracket ?
-
-            t->command[k + 1] = '\0';
-
-            TRC(F("Command: [%d:%s]" CR), _rseq[c->id], t->command);
-
-            // Sanity check : the first character must be an < otherwise something is fishy only if prootocol is JMRI
-            // if Withrottle something else applies and we need to check actually in a list of possible options
-            // cf setAppProtocol
-            if (t->command[0] != c->start_delimiter) {
-
-                ERR(F("Wrong command syntax: missing %c" CR), c->start_delimiter);
-
-            } else { 
-                if(t->command[1] == '!') {   // tag as ctrl command so no need to test for that on the CS
-                    c->p = _CTRL;
-                } else {
-                    c->p = _DCCEX;
-                }
-                INFO(F("Queuing: %s - %s" CR), &t->command[0], DCCI.decode(c->p));
-                DCCI.queue(c->id, c->p, &t->command[0]);
+            if (token[1] == '!') {
+                p = _CTRL;
+            } else {
+                p = _DCCEX;
             }
-            _rseq[c->id]++;
-            _nCmds++; 
-            j = 0;
-            k = 0;
+            queue = true;
+            break;
         }
-        else
-        {
-            k++;
+        case WITHROTTLE:{
+            p = _WITHROTTLE;
+            queue = true;
+            break;
         }
-        i++;
+        case HTTP:{ 
+            // need to extract the payload before sending as the CommandStation only 
+            // supports DCCEX or WIHROTTLE format for now  
+            break;
+        }
+        case JSON:{
+            // idem HTTP 
+            break;
+        }
+        case UNDEFINED:{
+            // nothing to be done should not end up here 
+            break;
+        }
+        default: {
+            // here we have an ERROR 
+        break;
+        }
     }
-    unsigned long _endT = micros();
-    char time[10] = {0};
-    ultoa(_endT - _startT, time, 10);
-    INFO(F("[%d] Commands processed in [%s]uS\n"), _nCmds, time);
+    _sseq[currentConnection->id];
+    if(queue) DCCI.queue(currentConnection->id, p, token);
 }
-
-
-void echoProcessor(Connection *c, TransportProcessor *t)
-{
-    byte reply[MAX_ETH_BUFFER];
-
-    memset(reply, 0, MAX_ETH_BUFFER);
-    sprintf((char *)reply, "ERROR: malformed content in [%s]", t->buffer);
-    TRC(F("%d,%d:Echoing back: %s" CR), c->id, c->client->connected(), reply);
-    if (c->client->connected())
-    {
-        c->client->write(reply, strlen((char *)reply));
-        _sseq[c->id]++;
-        c->isProtocolDefined = false; // reset the protocol to not defined so that we can recover the next time
-    }
-}
-
-/**
- * @brief takes all < > and <! > commands and sends them to the commandstation
- * 
- * @param c 
- * @param t 
- */
-void jmriProcessor(Connection *c, TransportProcessor *t)
-{
-    TRC(F("Processing JMRI ..." CR));
-    processStream(c, t);
-}
-void withrottleProcessor(Connection *c, TransportProcessor *t)
-{
-    TRC(F("Processing WiThrottle ...to be done" CR));
-    // processStream(c, t);
-}
-/**
- * @brief creates a HttpRequest object for the user callback. Some conditions apply esp reagrding the length of the items in the Request
- * can be found in @file HttpRequest.h 
- *  
- * @param client Client object from whom we receievd the data
- * @param c id of the Client object
- */
-void httpProcessor(Connection *c, TransportProcessor *t)
-{
-
-    if (httpReq.callback == 0)
-        return; // no callback i.e. nothing to do
-    /**
-     * @todo look for jmri formatted uris and execute those if there is no callback. If no command found ignore and 
-     * ev. send a 401 error back
-     */
-    uint8_t i, l = 0;
-    ParsedRequest preq;
-    l = strlen((char *)t->buffer);
-    for (i = 0; i < l; i++)
-    {
-        httpReq.parseRequest((char)t->buffer[i]);
-    }
-    if (httpReq.endOfRequest())
-    {
-        preq = httpReq.getParsedRequest();
-        httpReq.callback(&preq, c->client);
-        httpReq.resetRequest();
-    } // else do nothing and continue with the next packet
-}
-
 /**
  * @brief Reads what is available on the incomming TCP stream and hands it over to the protocol handler.
  * 
@@ -305,6 +93,7 @@ void httpProcessor(Connection *c, TransportProcessor *t)
  */
 void TransportProcessor::readStream(Connection *c, bool read)
 {
+    
     int count = 0;
     // read bytes from a TCP client if required 
     if (read) {
@@ -315,60 +104,13 @@ void TransportProcessor::readStream(Connection *c, bool read)
         count = strlen((char *)buffer);
     }
     
-
-    
-    // figure out which protocol
-
-    if (!c->isProtocolDefined)
-    {
-        c->p = setAppProtocol(buffer[0], buffer[1], c);
-        c->isProtocolDefined = true;
-
-        switch (c->p)
-        {
-        case _DCCEX:
-        {
-            c->end_delimiter = '>';
-            c->appProtocolHandler = (appProtocolCallback)jmriProcessor;
-            break;
-        }
-        case _WITHROTTLE:
-        {
-            c->end_delimiter = '\n';
-            c->appProtocolHandler = (appProtocolCallback)withrottleProcessor;
-            break;
-        }
-        case _HTTP:
-        {
-            c->appProtocolHandler = (appProtocolCallback)httpProcessor;
-            httpReq.callback = nwi->getHttpCallback();
-            break;
-        }
-        case UNKNOWN_CS_PROTOCOL:
-        {
-            INFO(F("Requests will not be handeled and packet echoed back" CR));
-            c->appProtocolHandler = (appProtocolCallback)echoProcessor;
-            break;
-        }
-        }
-    }
-    _pNum++;
     IPAddress remote = c->client->remoteIP();
     INFO(F("Client #[%d] Received packet #[%d] of size:[%d] from [%d.%d.%d.%d]" CR), c->id, _pNum, count, remote[0], remote[1], remote[2], remote[3]);
-    
-    // Clean up if we recieve unwanted \n and/or \r characters at the end 
-    // e.g. terminal on MAC we get both on PacketSender as of confguration you get it or not
+    _rseq[c->id]++; // increase the number of packets recieved 
+    // tokenize the recived information and send the token to the 
+    currentConnection = c;
+    tokenizer.scanCommands((char *) buffer, count, &TransportProcessor::tokenHandler);
+    _pNum++;
 
-    if (buffer[count] == '\r' || buffer[count] == '\n') buffer[count] = '\0';
-    if (buffer[count-1] == '\r' || buffer[count-1] == '\n') buffer[count-1] = '\0';
-    if (buffer[count-2] == '\r' || buffer[count-2] == '\n') buffer[count-2] = '\0';
-
-    // terminate the string Properly
-    buffer[count] = '\0'; 
-    INFO(F("Packet: [%s]" CR), buffer);
-
-    // chop the buffer into CS / WiThrottle commands || assemble command across buffer read boundaries
-    c->appProtocolHandler(c, this);
 }
-
 
