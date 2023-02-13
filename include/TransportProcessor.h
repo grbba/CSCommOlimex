@@ -1,5 +1,5 @@
 /*
- * © 2020 Gregor Baues. All rights reserved.
+ * © 2020,2023 Gregor Baues. All rights reserved.
  *  
  * This is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the 
@@ -23,23 +23,16 @@
 #include <Arduino.h>
 #include <ETH.h>
 #include <WiFi.h>
-
-#ifdef DCCEX_ENABLED
-    #include "RingStream.h"
-#endif
-
-#include "Transport.h"
-#include "NetworkConfig.h"
-#include "NetworkInterface.h"
+#include <CommandTokenizer.h>
+#include <Transport.h>
 
 
 class TransportProcessor
 {
 private:
-#ifdef DCCEX_ENABLED
-    void sendToDCC(Connection *c, TransportProcessor* t, bool blocking);
-#endif
-    
+
+    static Connection *currentConnection;
+    static void tokenHandler(scanType s, char *token);
 
 public:
     UDP *udp;                                 // need to carry the single UDP server instance over to the processor for sending packest

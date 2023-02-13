@@ -20,6 +20,9 @@
 
 #include <Arduino.h>
 #include <DCSIlog.h>
+#ifndef DCCI_CS
+#include <Transport.h>
+#endif
 #include <DCSIconfig.h>
 #include "MsgPacketizer.h"
 #include "Queue.h"
@@ -55,18 +58,19 @@ typedef enum
  * the networkstation will function as MQTT & HTTP endpoint and only transmit the the DCCEX type commands
  * the API endpoint will translate to DCCEX commands no WITHROTTLE over HTTP and/or MQTT yet
  */
+#ifdef DCCI_CS
 typedef enum
 {
     _DCCEX,          //< > encoded
     _WITHROTTLE,     // Withrottle 
-    _CTRL,           // messages with _CTRL; used on both sides for controlling the env depending on the reciver msg will be processed differently  
     _REPLY,          // Message comming back from the commandstation after the execution of a command; all replys will be forwarded to the originating client
     _DIAG,           // Diagnostic messages comming back from the commandstation
     _MQTT,           // MQTT messages they are handled only on the NW station just like HTTP
     _HTTP,           //  HTTP endpoint
+    _CTRL,           // to be set when sending to the CS if the the msg send starts with "<!" avoids the need to do the check on the CS
     UNKNOWN_CS_PROTOCOL  // DO NOT remove; used for sizing and testing conditions
 } csProtocol;
-
+#endif
 #define HANDLERS  \
     static void dccexHandler(DccMessage m); \
     static void wiThrottleHandler(DccMessage m); \
@@ -78,13 +82,13 @@ typedef enum
 #ifndef DCCI_CS
 #define HANDLER_INIT  \
    _tcsProtocolHandler handlers[UNKNOWN_CS_PROTOCOL] = \
-   {dccexHandler, notYetHandler, ctrlHandler, replyHandler, diagHandler, notYetHandler, notYetHandler}; 
+   {    dccexHandler,   notYetHandler,  replyHandler,   diagHandler,    notYetHandler, notYetHandler, ctrlHandler}; 
 #else
 #define HANDLER_INIT  \
    _tcsProtocolHandler handlers[UNKNOWN_CS_PROTOCOL] = \
-   {dccexHandler, notYetHandler, ctrlHandler, notYetHandler, notYetHandler, notYetHandler, notYetHandler}; 
+   {    dccexHandler,   notYetHandler,  notYetHandler,  notYetHandler,  notYetHandler,  notYetHandler,  ctrlHandler}; 
 #endif
-//  _DCCEX          _WITHROTTLE,     _CTRL       _REPLY         _DIAG
+//      _DCCEX          _WITHROTTLE,    _REPLY        _DIAG           _MQTT           _HTTP           _CTRL
 
 /**
  * @brief DccMessage is the struct serailazed and send over the 
@@ -134,7 +138,7 @@ private:
 
     void write();                                     // writes the messages from the outgoing queue to the com protocol endpoint (Serial only
                                                       // at this point
-    const char* csProtocolNames[5] = {"DCCEX","WTH","CTRL", "REPLY", "UNKNOWN"};   //TODO move that to Progmem
+    const char* csProtocolNames[8] = {"DCCEX", "WTH", "REPLY", "DIAG", "MQTT" , "HTTP", "CTRL", "UNKNOWN"};   //TODO move that to Progmem
     const char* comStationNames[3] = {"CommandStation","NetworkStation","Unknown"};
     
     HANDLERS;

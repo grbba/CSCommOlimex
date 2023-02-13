@@ -1,5 +1,5 @@
 /*
- * © 2020 Gregor Baues. All rights reserved.
+ * © 2020,2023 Gregor Baues. All rights reserved.
  *  
  * This is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the 
@@ -19,14 +19,8 @@
 
 #include <Arduino.h>
 #include <DCSIlog.h>
-
-#ifdef DCCEX_ENABLED
-#include "RingStream.h"
-#endif
-
-#include "NetworkInterface.h"
-#include "Transport.h"
-#include "TransportProcessor.h"
+#include <Transport.h>
+#include <TransportProcessor.h>
 
 extern bool diagNetwork;
 extern uint8_t diagNetworkClient;
@@ -81,7 +75,6 @@ void Transport<S, C, U>::connectionPool(S *server)
     {
         clients[i] = server->accept();
         connections[i].client = &clients[i];              
-        memset(connections[i].overflow, 0, MAX_OVERFLOW);
         connections[i].id = i;
         TRC(F("TCP Connection pool:       [%d:%x]" CR), i, connections[i].client);
     }
@@ -93,7 +86,6 @@ void Transport<S, C, U>::connectionPool(U *udp)
     {
         clients[i] = server->accept();
         connections[i].client = &clients[i];              
-        memset(connections[i].overflow, 0, MAX_OVERFLOW); 
         connections[i].id = i;
 
         TRC(F("UDP Connection pool:       [%d:%x]" CR), i, udp);
@@ -175,7 +167,6 @@ void Transport<S,C,U>::tcpSessionHandler(S* server)
                 INFO(F("Disconnect client #%d" CR), i);
                 clients[i].stop();
                 active--;
-                connections[i].isProtocolDefined = false;
             }
         }
     }

@@ -34,8 +34,6 @@ NetworkInterface nwi2;
 // in the future if multipe serial ports may be possible to create // connections if the com is getting the bottleneck
 // DccExInterface _idccex;
 
-
-
 // (1) Start NetworkInterface - HTTP callback
 
 void httpRequestHandler(ParsedRequest *req, Client* client) {
@@ -84,26 +82,26 @@ void setup()
 
 }
 
-bool done = false;
-DccMessage m;
-void doOnce(HardwareSerial *sp) {
-    if(!done) {
-      Serial.println("Sending test message to CS ...");
-      MsgPack::str_t s = MsgPack::str_t("test");
-        m.client = 10;
-        m.mid = 101;
-        m.p = 1;
-        m.msg = s;
-        m.sta = _NWSTA;
-        MsgPacketizer::send(*sp, 0x34, m);
-        done = true;
-    }
-}
+// bool done = false;
+// DccMessage m;
+// void doOnce(HardwareSerial *sp) {
+//     if(!done) {
+//       Serial.println("Sending test message to CS ...");
+//       MsgPack::str_t s = MsgPack::str_t("test");
+//         m.client = 10;
+//         m.mid = 101;
+//         m.p = 1;
+//         m.msg = s;
+//         m.sta = _NWSTA;
+//         MsgPacketizer::send(*sp, 0x34, m);
+//         done = true;
+//     }
+// }
 
 void loop()
 {
 
-doOnce(&Serial1); // send a test message to see if we have at leasta serial connection
+// doOnce(&Serial1); // send a test message to see if we have at leasta serial connection
 
 // Handle all the incomming/outgoing messages for the active interfaces
 // incomming : from the network to the ComStation and to the Network

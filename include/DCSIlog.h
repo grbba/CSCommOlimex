@@ -1,28 +1,38 @@
-/*
- *  © 2023, Gregor Baues. All rights reserved.
+/**
+ * @file DCSIlog.h
+ * @author Gregor Baues
+ * @brief This file is part of the ESP Network Communications Framework for DCC-EX
+ * @version 0.1
+ * @date 2023-02-09
  *
- *  This file is part of the ESP Network Communications Framework for DCC-EX
+ * @copyright Copyright (c) 2023
  *
- *  This is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  It is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with CommandStation.  If not, see <https://www.gnu.org/licenses/>.
+ * See the GNU General Public License for more details <https://www.gnu.org/licenses/>
  */
+
+
 #ifndef DCSIlog_h
 #define DCSIlog_h
 
 #include <Arduino.h>
 #include <ArduinoLog.h>
 #include <DCSIconfig.h>
+#ifdef DCCI_CS
 #include "StringFormatter.h"
+#endif
 
 #if defined(__arm__)
 extern "C" char *sbrk(int);
@@ -55,26 +65,21 @@ static inline int freeMemory()
  * changing the ArduinoLog library itself
  * DCSI : DCC-EX Command Station Contol Interface DCSI
  */
+#ifdef DCCI_CS
 class DCSILog : public Logging, StringFormatter
+#else
+class DCSILog : public Logging
+#endif
 {
 private:
     Print *_logOutput;
     int ramLowWatermark = __INT_MAX__; // replaced on first loop
     char pBuffer[20];                  // print buffer
-    int _loglevel = LOG_LEVEL_TRACE;   // loglevels as of ArduinoLog;
 public:
     void begin(int level, Print *output, bool showLevel = true)
     {
         _logOutput = output;
         Logging::begin(level, output, showLevel);
-    }
-
-    void setLogLevel(int level) {
-        _loglevel = level;
-    }
-    
-    int getLogLevel() {
-        return _loglevel;  
     }
 
     void printLogLevel(int logLevel)
@@ -191,10 +196,12 @@ public:
 #define TRC(message...) ;
 #define WARN(message...) ;
 #define FATAL(message...) ;
-#define ERR(message...) EH_DW(EH_IFLL(LOG_LEVEL_ERROR, dccLog.printTimestamp(););               \
-                              dccLog.error("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__);       \
-                              EH_IFLL(LOG_LEVEL_ERROR, dccLog.printLogLevel(LOG_LEVEL_ERROR);); \
-                              dccLog.error(message);)
+#define ERR(message...) EH_DW(EH_IFLL(LOG_LEVEL_ERROR, {    dccLog.printTimestamp();                                          \
+                                                            EH_IFFL(FLNAME, dccLog.error("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__));     \
+                                                            EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
+                                                            dccLog.printLogLevel(LOG_LEVEL_ERROR);                         \
+                                                            dccLog.error(message); \
+                                                        } ))
 #endif
 
 #ifdef __DEV__
@@ -207,35 +214,41 @@ public:
 #define REL_ERR(id) EH_DW(dccLog.flow('E',id))
 
 // print all full message to the local serial port dpending on the set log level in the begin call
-#define INFO(message...) EH_DW(EH_IFLL(LOG_LEVEL_INFO, dccLog.printTimestamp(););                           \
-                               EH_IFFL(FLNAME, dccLog.info("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__);); \
-                               EH_IFMEM(FREEMEM, dccLog.printFreeMem());                                    \
-                               EH_IFLL(LOG_LEVEL_INFO, dccLog.printLogLevel(LOG_LEVEL_INFO););              \
-                               dccLog.info(message);)
+#define INFO(message...) EH_DW(EH_IFLL(LOG_LEVEL_INFO, {    dccLog.printTimestamp();                                          \
+                                                            EH_IFFL(FLNAME, dccLog.info("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__));     \
+                                                            EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
+                                                            dccLog.printLogLevel(LOG_LEVEL_INFO);                         \
+                                                            dccLog.info(message); \
+                                                        } ))
 
-#define ERR(message...) EH_DW(EH_IFLL(LOG_LEVEL_ERROR, dccLog.printTimestamp(););                           \
-                              EH_IFFL(FLNAME, dccLog.error("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__);); \
-                              EH_IFMEM(FREEMEM, dccLog.printFreeMem());                                     \
-                              EH_IFLL(LOG_LEVEL_ERROR, dccLog.printLogLevel(LOG_LEVEL_ERROR););             \
-                              dccLog.error(message);)
+#define ERR(message...) EH_DW(EH_IFLL(LOG_LEVEL_ERROR, {    dccLog.printTimestamp();                                          \
+                                                            EH_IFFL(FLNAME, dccLog.error("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__));     \
+                                                            EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
+                                                            dccLog.printLogLevel(LOG_LEVEL_ERROR);                         \
+                                                            dccLog.error(message); \
+                                                        } ))
 
-#define WARN(message...) EH_DW(EH_IFLL(LOG_LEVEL_WARNING, dccLog.printTimestamp(););                 \
-                               dccLog.warning("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__);         \
-                               EH_IFMEM(FREEMEM, dccLog.printFreeMem());                             \
-                               EH_IFLL(LOG_LEVEL_WARNING, dccLog.printLogLevel(LOG_LEVEL_WARNING);); \
-                               dccLog.warning(message);)
+#define WARN(message...) EH_DW(EH_IFLL(LOG_LEVEL_WARNING, { dccLog.printTimestamp();                                          \
+                                                            EH_IFFL(FLNAME, dccLog.warning("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__));     \
+                                                            EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
+                                                            dccLog.printLogLevel(LOG_LEVEL_WARNING);                         \
+                                                            dccLog.warning(message); \
+                                                          } ))
 
-#define TRC(message...) EH_DW(EH_IFLL(LOG_LEVEL_TRACE, dccLog.printTimestamp(););               \
-                              dccLog.trace("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__);       \
-                              EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
-                              EH_IFLL(LOG_LEVEL_TRACE, dccLog.printLogLevel(LOG_LEVEL_TRACE);); \
-                              dccLog.trace(message);)
 
-#define FATAL(message...) EH_DW(EH_IFLL(LOG_LEVEL_FATAL, dccLog.printTimestamp(););               \
-                                dccLog.fatal("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__);       \
-                                EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
-                                EH_IFLL(LOG_LEVEL_FATAL, dccLog.printLogLevel(LOG_LEVEL_FATAL);); \
-                                dccLog.fatal(message);)
+#define TRC(message...) EH_DW(EH_IFLL(LOG_LEVEL_TRACE,  { dccLog.printTimestamp();              \
+                                                          EH_IFFL(FLNAME,dccLog.trace("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__));       \
+                                                          EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
+                                                          dccLog.printLogLevel(LOG_LEVEL_TRACE); \
+                                                          dccLog.trace(message); \
+                                                        } ))
+
+#define FATAL(message...) EH_DW(EH_IFLL(LOG_LEVEL_FATAL, {  dccLog.printTimestamp();                                          \
+                                                            EH_IFFL(FLNAME, dccLog.fatal("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__));     \
+                                                            EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
+                                                            dccLog.printLogLevel(LOG_LEVEL_FATAL);                         \
+                                                            dccLog.fatal(message); \
+                                                        } ))
 #endif
 
 extern DCSILog dccLog;
