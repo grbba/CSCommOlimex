@@ -237,8 +237,6 @@ void processStream(Connection *c, TransportProcessor *t)
 
 
 void echoProcessor(Connection *c, TransportProcessor *t)
-
-
 {
     byte reply[MAX_ETH_BUFFER];
 
@@ -252,6 +250,13 @@ void echoProcessor(Connection *c, TransportProcessor *t)
         c->isProtocolDefined = false; // reset the protocol to not defined so that we can recover the next time
     }
 }
+
+/**
+ * @brief takes all < > and <! > commands and sends them to the commandstation
+ * 
+ * @param c 
+ * @param t 
+ */
 void jmriProcessor(Connection *c, TransportProcessor *t)
 {
     TRC(F("Processing JMRI ..." CR));
@@ -309,6 +314,8 @@ void TransportProcessor::readStream(Connection *c, bool read)
     } else {
         count = strlen((char *)buffer);
     }
+    
+
     
     // figure out which protocol
 

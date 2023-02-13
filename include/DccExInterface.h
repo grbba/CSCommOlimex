@@ -20,7 +20,9 @@
 
 #include <Arduino.h>
 #include <DCSIlog.h>
+#ifndef DCCI_CS
 #include <Transport.h>
+#endif
 #include <DCSIconfig.h>
 #include "MsgPacketizer.h"
 #include "Queue.h"
@@ -69,7 +71,6 @@ typedef enum
     UNKNOWN_CS_PROTOCOL  // DO NOT remove; used for sizing and testing conditions
 } csProtocol;
 #endif
-
 #define HANDLERS  \
     static void dccexHandler(DccMessage m); \
     static void wiThrottleHandler(DccMessage m); \

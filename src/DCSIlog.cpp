@@ -1,10 +1,36 @@
+/**
+ * @file DCSIlog.cpp
+ * @author Gregor Baues
+ * @brief 
+ * @version 0.1
+ * @date 2023-02-09
+ * 
+ * @copyright Copyright (c) 2023
+ *
+ * This is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * See the GNU General Public License for more details <https://www.gnu.org/licenses/>
+ * 
+ */
+
 #include "DCSIlog.h"
 #include <DCSIconfig.h>
 #include <StreamUtils.h>
 #include <MsgPacketizer.h>
+#include <DccExInterface.h>
 
 #ifdef DCCI_CS // only for the commandstation
-#include <DccExInterface.h>
 
 unsigned int FSHlength(const __FlashStringHelper * FSHinput) {
   PGM_P FSHinputPointer = reinterpret_cast<PGM_P>(FSHinput);
@@ -14,7 +40,6 @@ unsigned int FSHlength(const __FlashStringHelper * FSHinput) {
   }
   return stringLength;
 }
-
 /**
  * @brief dropin replacement for the StringFormatter::diag in the DIAG.h file of the CS
  * This way all DIAG output will be send to the _NWSTA for display/further processing 
@@ -61,7 +86,6 @@ void DCSILog::diag(const FSH *input...)
     // queue the string to be send  with protocol DIAG
     // if we send messages from the interface the use DCSILOG as protocol
 }
-
 /**
  * @brief the idea is to just sen ids for error & warnings in order to keep the code on the CS clean and less cluttered
  * but at the same time for dev mode we'd like to get the full set of data according to the loglevel.
