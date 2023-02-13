@@ -34,8 +34,6 @@ NetworkInterface nwi2;
 // in the future if multipe serial ports may be possible to create // connections if the com is getting the bottleneck
 // DccExInterface _idccex;
 
-
-
 // (1) Start NetworkInterface - HTTP callback
 
 void httpRequestHandler(ParsedRequest *req, Client* client) {
