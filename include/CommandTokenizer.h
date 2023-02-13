@@ -74,9 +74,13 @@ public:
 // one token for each command type managed by the endpoint
 
 static CommandToken dcc_t((const char*)"JMRI", (const char*)"<",(const char*)">", DCCEX);                          // JMRI / DC commands
-static CommandToken wit_t((const char*)"WiThrottle", (const char*)"*DPTRHMRQN",(const char*)"\n", WITHROTTLE);     // WITHROTTLE commands
-static CommandToken json_t((const char*)"Json", (const char*)"{",(const char*)"}", JSON);                          // JSON formatted commands need to extract transform what can be send to the CS
-
+// WITHROTTLE commands
+// Secndary chars: "TRU" for possible disambiguation ( R overlaps with HTTP)
+static CommandToken wit_t((const char*)"WiThrottle", (const char*)"*DPTRHMRQN",(const char*)"\n", WITHROTTLE);     
+static CommandToken json_t((const char*)"Json", (const char*)"{",(const char*)"}", JSON);  
+// HTTP request formatted commands need to extract transform what can be send to the CS
+// Secndary chars: "UAOERP" for possible disambiguation 
+static CommandToken http_t((const char*)"HTTP", (const char*)"PGDCTOH",(const char*)"\0\n", HTTP);   
 
 class CommandTokenizer {
 private:
@@ -90,7 +94,7 @@ private:
     } scanState;
 
     // array of all token types understood by the system. if NULL the this is planned but not yet available
-    CommandToken *token[scanType::UNDEFINED +1] = {&dcc_t, &wit_t, NULL, &json_t, NULL};  // in the order of scanType so that we can use the enum to acces the araay
+    CommandToken *token[scanType::UNDEFINED +1] = {&dcc_t, &wit_t, &http_t, &json_t, NULL};  // in the order of scanType so that we can use the enum to acces the araay
     
     char *start;
     char *current;

@@ -1,17 +1,19 @@
 /**
-* scan incomming stream for commands no differentiation on the first char of what we see as of today
+* scans an incomming stream for commands no differentiation on the first char of what we see as of today
 * 
-* manages overflow i.e. if we have the beginning of a command without having found the terminator
+* Manages overflow i.e. if we have the beginning of a command without having found the terminator
 * before the end of the block of char read available we keep those in a buffer end prepend this
-* to the next block of char available where we hopefully will find the end delimiter of a command
-* if not i.e. we see the start of a new command just discard everything before and issue a warning
-* delimiter  for 
+* to the next block of char available where we hopefully will find the end delimiter of a command.
+* if not i.e. we see the start of a new command just discard everything before and issue a warning.
+* Nested commands will be ignored for now and be interpreted as payload of the token type
+* which is currently scanned.
+* Delimiters for 
 * DCCEX/JMRI: < -payload- > or <! -payload- > <! -payload- > messages are management/ctrl messages for the communication part of the 
 *             CS and will not be send/parsed by the DCCEX parser for controlling the layout
 * WITHROTTLE: 
-* (star)/D/PT/PR/HU/M/R/Q/N -payload- \n  end of the command is always a \n
-* HTTP: PUT/PATCH/POST/GET/DELETE/CONNECT/TRACE/OPTIONS/HEAD      
-*       end of the message is always the start of a new message ... (?)
+* (star)/D/PT/PR/HU/M/R/Q/N -payload- \n  end of the command is always a \n this will need disambiguation wrt to Http 
+* HTTP: PUT/PATCH/POST/GET/DELETE/CONNECT/TRACE/OPTIONS/HEAD  end of the message is always the start of a new message ... (?)
+
 * HTTP messages will not be send to the CommandStation as such the Networkstation functions as endpoint 
 *               extacting DCCEX/JMRI or WiThrottle messages as payloads
 * MQTT:         same as for HTTP (MQTT is used to control any CommandStation over the API deployed at OVH 
@@ -19,8 +21,8 @@
 */ 
 
 /*
-*  Lest start ith DCCEX/JMRI and WITHROTTLE ( plus conrol messages such as <! but for the networkstation)
-* for the latter two options <!! > for example could be interpreted locally or a 
+* Lets start with DCCEX/JMRI and WITHROTTLE ( plus control messages such as <! for the CommandStation and similar for the 
+* NetworkStation - for the latter two options <!! > for example could be interpreted locally or a 
 * different command frame like ()
 */
 
