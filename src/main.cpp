@@ -19,12 +19,14 @@
 
 #include <Arduino.h>
 
+#include <NetworkInterface.h>
 #include <DccExInterface.h>
 #include <DCSIlog.h>
 #include <DCSIconfig.h>
+#include <DCSIDisplay.h>
 
 #include "freeMemory.h"
-#include "NetworkInterface.h"
+
 
 // (0) Declare NetworkInterfaces
 NetworkInterface nwi1;
@@ -32,21 +34,19 @@ NetworkInterface nwi2;
 
 // (1) Declare CommandstationInterface. no error checking for multiple of those yet here can only be one maybe two 
 // in the future if multipe serial ports may be possible to create // connections if the com is getting the bottleneck
-// DccExInterface _idccex;
+DccExInterface _idccex;
 
 // (1) Start NetworkInterface - HTTP callback
 
-void httpRequestHandler(ParsedRequest *req, Client* client) {
-  INFO(F("\nParsed Request:"));
-  INFO(F("\nMethod:         [%s]"), req->method);
-  INFO(F("\nURI:            [%s]"), req->uri);
-  INFO(F("\nHTTP version:   [%s]"), req->version);
-  INFO(F("\nParameter count:[%d]\n"), *req->paramCount);
-}
+// void httpRequestHandler(ParsedRequest *req, Client* client) {
+//   INFO(F("\nParsed Request:"));
+//   INFO(F("\nMethod:         [%s]"), req->method);
+//   INFO(F("\nURI:            [%s]"), req->uri);
+//   INFO(F("\nHTTP version:   [%s]"), req->version);
+//   INFO(F("\nParameter count:[%d]\n"), *req->paramCount);
+// }
 
 // (1) End NetworkInterface - HTTP callback
-
-
 
 void setup()
 {
@@ -55,6 +55,8 @@ void setup()
   dccLog.begin(LOG_LEVEL_TRACE, &Serial, false); // Start logging subsystem
                               // Start the serial connection for the Serial monitor / uploads etc ...
 
+ 
+  display.setup();  
   INFO(F("DCC++ EX NetworkInterface Standalone" CR));
 
   // setup the serial (or other connection ) to the MEGA
@@ -62,10 +64,12 @@ void setup()
   // assumes that the mega is wired up to the ESP32 over a level shifter 
 
   INFO(F("Opening serial connection to the CommandStation ..." CR));
-
   // create the connection to the Command station
   DCCI.setup(_NWSTA);  // set up as Network station just use the default values
+   
 
+
+  
   // open the connection to the "outside world" over Ethernet (cabled) or WiFi (wireless) 
   // nwi1.setup(ETHERNET, UDPR);                    // ETHERNET/UDP on Port 2560 
   // nwi2.setup(ETHERNET, UDPR, 8888);              // ETHERNET/UDP on Port 8888 
@@ -105,25 +109,12 @@ void loop()
 
 // Handle all the incomming/outgoing messages for the active interfaces
 // incomming : from the network to the ComStation and to the Network
-NetworkInterface::loop();
+  NetworkInterface::loop();
 
 // incomming messages will be queued for the DccExInterface to be consumed
 // forward the incomming commands to whomever is needed
 // e.g. config commands for the commandstation will be handled locally
 // other commands like <s> will be send to the Command station
 
-DCCI.loop();
-
-  
-// Optionally report any decrease in memory (will automatically trigger on first call)
-#if ENABLE_FREE_MEM_WARNING
-  static int ramLowWatermark = 32767; // replaced on first loop 
-
-  int freeNow = freeMemory();
-  if (freeNow < ramLowWatermark)
-  {
-    ramLowWatermark = freeNow;
-    LCD(2,F("Free RAM=%5db"), ramLowWatermark);
-  }
-#endif
+  DCCI.loop();
 }
