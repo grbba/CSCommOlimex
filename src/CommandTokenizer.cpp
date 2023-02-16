@@ -73,7 +73,7 @@ CommandTokenizer::scanState CommandTokenizer::stateInToken(char *scanBuffer, con
         end = current;
         return(OVERFLOW); 
     }
-    if (strchr(token[currentCmdType]->getEndToken(), *current) != NULL ) { // here we have to check for the end of the type we are scanning
+    if (strchr(token[currentCmdType]->getEndToken()->c_str(), *current) != NULL ) { // here we have to check for the end of the type we are scanning
         end = current;
         return(END_TOKEN);
     }
