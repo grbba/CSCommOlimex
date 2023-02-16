@@ -124,9 +124,7 @@ void CommandTokenizer::scanCommands(char *in, const int inl, void(*cb)(scanType 
 
     scanState state = STARTSCAN;
     
-    // std::cout << "Scanning " << scanBuffer << std::endl;
-    // std::cout << "Current state " << state << std::endl;
-
+    TRC(F("Scanning %s" CR), scanBuffer);
     while (state != FINAL) {
         switch(state) {
             case STARTSCAN :{
@@ -166,7 +164,6 @@ void CommandTokenizer::scanCommands(char *in, const int inl, void(*cb)(scanType 
             current++;
         }  
     }
-    // std::cout << "state " << state << std::endl;
     return;
 }
 

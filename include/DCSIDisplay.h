@@ -30,14 +30,25 @@
 #include <DCSIconfig.h>
 #include <DCSIlog.h>
 
+#include <Board_Pinout.h>
 #include <SPI.h>
-#include <TFT_eSPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ILI9341.h>
+#include <Wire.h>
+
+// Fonts to be used on the OLIMEX
+#include <Fonts/FreeMonoBoldOblique12pt7b.h>
+#include <Fonts/FreeSerif9pt7b.h>
+#include <Fonts/FreeSans9pt7b.h>
+#include <Fonts/FreeMono9pt7b.h>
+
 
 class DCSIDisplay {
     private:
 
     public:
-        TFT_eSPI screen = TFT_eSPI();
+    Adafruit_ILI9341 screen = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
+        // TFT_eSPI screen = TFT_eSPI();
         void setup();
 
     DCSIDisplay(){};

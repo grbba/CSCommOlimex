@@ -56,7 +56,7 @@ void setup()
                               // Start the serial connection for the Serial monitor / uploads etc ...
 
  
-  display.setup();  
+  // display.setup();  
   INFO(F("DCC++ EX NetworkInterface Standalone" CR));
 
   // setup the serial (or other connection ) to the MEGA

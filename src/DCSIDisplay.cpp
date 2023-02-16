@@ -28,8 +28,11 @@
 #include <DCSIlog.h>
 #include <DCSIDisplay.h>
 
+#include <Board_Pinout.h>
 #include <SPI.h>
-#include <TFT_eSPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ILI9341.h>
+#include <Wire.h>
 
 /**
  * @brief Initalize the TFT display and show the splash screen
@@ -39,8 +42,11 @@ void DCSIDisplay::setup() {
     INFO(F("Screen setup" CR));
     screen.begin();
     screen.setRotation(1);
-    screen.fillScreen(TFT_DARKGREY);
-    screen.setTextFont(2);
+    screen.fillScreen(ILI9341_DARKCYAN);
+    //screen.setFont(&FreeMonoBoldOblique12pt7b); 
+    screen.setFont(&FreeSans9pt7b); 
+    // screen.setTextSize(2);
+    screen.println(F("\nDCCEX Network module"));
 }
 
 DCSIDisplay display = DCSIDisplay();
