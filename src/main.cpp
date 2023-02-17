@@ -28,6 +28,8 @@
 #include "freeMemory.h"
 
 
+void displayIntro();
+
 // (0) Declare NetworkInterfaces
 NetworkInterface nwi1;
 NetworkInterface nwi2;
@@ -53,23 +55,23 @@ void setup()
   Serial.begin(115200);   
   delay(2000);
   dccLog.begin(LOG_LEVEL_TRACE, &Serial, false); // Start logging subsystem
-                              // Start the serial connection for the Serial monitor / uploads etc ...
 
- 
-  // display.setup();  
+  // Serial.println("I am alive ...");
+                              
+  display.setup();  
+  displayIntro();
+
   INFO(F("DCC++ EX NetworkInterface Standalone" CR));
 
   // setup the serial (or other connection ) to the MEGA
   // start the serial manager by providing the HW Serial port other than Serial all by iself
   // assumes that the mega is wired up to the ESP32 over a level shifter 
 
-  INFO(F("Opening serial connection to the CommandStation ..." CR));
+  INFO(F("Opening Connection to the CommandStation ..." CR));
   // create the connection to the Command station
   DCCI.setup(_NWSTA);  // set up as Network station just use the default values
-   
 
 
-  
   // open the connection to the "outside world" over Ethernet (cabled) or WiFi (wireless) 
   // nwi1.setup(ETHERNET, UDPR);                    // ETHERNET/UDP on Port 2560 
   // nwi2.setup(ETHERNET, UDPR, 8888);              // ETHERNET/UDP on Port 8888 
@@ -82,7 +84,8 @@ void setup()
   INFO(F("Network Setup done ...\n"));
   INFO(F("Free RAM after network init: [%d]\n"),freeMemory());
 
-  // (2) End starting NetworkInterface
+  Log.begin(LOG_LEVEL_TRACE, &Serial, false);     // TODO: Don't know why yet thos has to be done here again ... otherwise the output gets corrupted
+  TRC(F("Logging %s %x %x" CR), Log.getLogOutput() == &Serial ? "OK" : "NOK", Log.getLogOutput(), &Serial); 
 
 }
 
@@ -117,4 +120,21 @@ void loop()
 // other commands like <s> will be send to the Command station
 
   DCCI.loop();
+  // display.loop();
+}
+
+#define MAJOR 1
+#define MINOR 0
+#define PATCH 4
+
+void displayIntro() {
+
+    char month[4];
+    int day, year, hour, min, sec;
+    sscanf(__DATE__, "%s %i %i", &month[0], &day, &year);
+    sscanf(__TIME__, "%i:%i:%i", &hour, &min, &sec);
+
+  display.screen.print("\nDCC++ EX Network Interface\n");
+  display.screen.printf("Version %d.%d.%d" , MAJOR, MINOR, PATCH);
+  display.screen.printf("-%d%d%d\n(c) 2023 grbba\n\n" , day, hour, min);
 }
