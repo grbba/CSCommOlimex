@@ -102,7 +102,7 @@ auto DccExInterface::recieve() -> void
             ERR(F("Wrong sender; Msg seems to have been send to self; Msg has been ignored" CR));
             return;
         }
-        INFO("Sending to handler" CR);
+        TRC("Sending to handler" CR);
         handlers[m.p](m);
     }
     return;

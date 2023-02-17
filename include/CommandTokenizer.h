@@ -53,35 +53,20 @@ public:
         end_t = e;
         cmdType = st;
     }
-
     const String* getStartToken() {
         return &start_t;
     }
-
     const String* getEndToken() {
         return &end_t;
     }
-
     const String* getName() {
         return &name;
     }
-
     const scanType getCmdType() {
         return cmdType;
     }
 };
-
-// one token for each command type managed by the endpoint
-
-// static CommandToken dcc_t("JMRI", "<", ">", DCCEX);                          
-// WITHROTTLE commands
-// Secndary chars: "TRU" for possible disambiguation ( R overlaps with HTTP)
- // static CommandToken wit_t(( char*)"WiThrottle", ( char*)"*DPTRHMRQN",( char*)"\n", WITHROTTLE);     
- // static CommandToken json_t(( char*)"Json", ( char*)"{",( char*)"}", JSON);  
-// HTTP request formatted commands need to extract transform what can be send to the CS
-// Secndary chars: "UAOERP" for possible disambiguation 
- static CommandToken http_t(( char*)"HTTP", ( char*)"PGDCTOH",( char*)"\0\n", HTTP);   
-
+  
 class CommandTokenizer {
 private:
 
@@ -103,7 +88,6 @@ private:
     scanType currentCmdType = UNDEFINED;
     
     void (*callback)(scanType s, char * buffer);
-
     char overflow[MAX_MESSAGE_SIZE/2] = {'\0'}; 
 
     scanState stateStartScan();
@@ -122,7 +106,6 @@ public:
         token[HTTP]         = new CommandToken("HTTP", "PGDCTOH","\0\n", HTTP);             // HTTP request -> prep before send to the CS - Secondary chars: "UAOERP" for possible disambiguation 
         token[UNDEFINED]    = NULL; 
     }
-
     CommandToken *findScanType (char c){
         for(int i = 0; i <= scanType::UNDEFINED; i++) {
             CommandToken *ct = token[i];
@@ -135,6 +118,7 @@ public:
         return token[UNDEFINED];
     }
     void scanCommands(char *in, const int len, void (*handler)(scanType s, char * buffer) );
+    
     // static void testScan();
 
     CommandTokenizer() {

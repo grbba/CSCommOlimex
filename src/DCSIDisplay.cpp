@@ -33,6 +33,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 #include <Wire.h>
+#include <AR1021.h>
 
 /**
  * @brief Initalize the TFT display and show the splash screen
@@ -41,12 +42,21 @@
 void DCSIDisplay::setup() {
     INFO(F("Screen setup" CR));
     screen.begin();
-    screen.setRotation(1);
+    touch.begin();
     screen.fillScreen(ILI9341_DARKCYAN);
-    //screen.setFont(&FreeMonoBoldOblique12pt7b); 
     screen.setFont(&FreeSans9pt7b); 
-    // screen.setTextSize(2);
-    screen.println(F("\nDCCEX Network module"));
+    // screen.println(F("\nDCCEX Network module"));
+}
+
+void DCSIDisplay::loop() {
+    if (touch.isTouched2()) {
+        int16_t x = touch.getX();
+        int16_t y = touch.getY();
+        Serial.print("Touch detected at ");
+        Serial.print(x);
+        Serial.print(", ");
+        Serial.println(y);
+   }
 }
 
 DCSIDisplay display = DCSIDisplay();

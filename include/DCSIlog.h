@@ -72,14 +72,17 @@ class DCSILog : public Logging
 #endif
 {
 private:
-    Print *_logOutput;
+    Print *_logOut;
     int ramLowWatermark = __INT_MAX__; // replaced on first loop
     char pBuffer[20];                  // print buffer
+    Logging *_log;
 public:
     void begin(int level, Print *output, bool showLevel = true)
     {
-        _logOutput = output;
+        _logOut = output;
+        //Serial.printf("log out1 %x, %x\n", output, &Serial);
         Logging::begin(level, output, showLevel);
+        //Serial.printf("log out2 %x, %x, %x\n", Logging::getLogOutput(), &Serial, _logOut);
     }
 
     void printLogLevel(int logLevel)
@@ -89,25 +92,25 @@ public:
         {
         default:
         case 0:
-            _logOutput->print(" [silent ]: ");
+            _logOut->print(" [silent ]: ");
             break;
         case 1:
-            _logOutput->print(" [fatal  ]: ");
+            _logOut->print(" [fatal  ]: ");
             break;
         case 2:
-            _logOutput->print(" [error  ]: ");
+            _logOut->print(" [error  ]: ");
             break;
         case 3:
-            _logOutput->print(" [warning]: ");
+            _logOut->print(" [warning]: ");
             break;
         case 4:
-            _logOutput->print(" [info   ]: ");
+            _logOut->print(" [info   ]: ");
             break;
         case 5:
-            _logOutput->print(" [trace  ]: ");
+            _logOut->print(" [trace  ]: ");
             break;
         case 6:
-            _logOutput->print(" [verbose]: ");
+            _logOut->print(" [verbose]: ");
             break;
         }
     }
@@ -133,12 +136,12 @@ public:
         // Time as string
 
         sprintf(pBuffer, "%02lu:%02lu:%02lu.%03lu ", Hours, Minutes, Seconds, MilliSeconds);
-        _logOutput->print(pBuffer);
+        _logOut->print(pBuffer);
     }
     void printFreeMem()
     {
         sprintf(pBuffer, "[ram:%5db]", freeMemory());
-        _logOutput->print(pBuffer);
+        _logOut->print(pBuffer);
     }
 
 #ifdef DCCI_CS // only for the CS
@@ -236,10 +239,10 @@ public:
                                                           } ))
 
 
-#define TRC(message...) EH_DW(EH_IFLL(LOG_LEVEL_TRACE,  { dccLog.printTimestamp();              \
-                                                          EH_IFFL(FLNAME,dccLog.trace("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__));       \
-                                                          EH_IFMEM(FREEMEM, dccLog.printFreeMem());                         \
-                                                          dccLog.printLogLevel(LOG_LEVEL_TRACE); \
+#define TRC(message...) EH_DW(EH_IFLL(LOG_LEVEL_TRACE,  { dccLog.printTimestamp();          \
+                                                          EH_IFFL(FLNAME,dccLog.trace("%s:%d:%s", __FILE__, __LINE__, __FUNCTION__));      \
+                                                          EH_IFMEM(FREEMEM, dccLog.printFreeMem());                       \
+                                                          dccLog.printLogLevel(LOG_LEVEL_TRACE);  \
                                                           dccLog.trace(message); \
                                                         } ))
 

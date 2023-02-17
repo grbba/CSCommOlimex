@@ -112,6 +112,5 @@ void TransportProcessor::readStream(Connection *c, bool read)
     tokenizer.scanCommands((char *) buffer, count, &TransportProcessor::tokenHandler);
     _pNum++;
     TRC(F("Tokenizer done ..." CR));
-
 }
 
