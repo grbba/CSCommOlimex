@@ -107,6 +107,7 @@ int handleLLV(paramType &ptlist, CommandParams &p)
   p.clear(); // clear the queue; not necessary if we handle the command properly
   return 1;
 }
+
 int handleDiag(paramType &ptlist, CommandParams &p)
 {
   INFO(F("DIAG messages will be send to client %d" CR), atoi(p.pop()));  

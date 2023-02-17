@@ -48,10 +48,10 @@ typedef enum
  */
 typedef enum
 {
-    SRL,        // serial
-    I2C,        // i2c
-    SPI,        // spi
-    UNKNOWN_COM_PROTOCOL
+    _SRL,        // serial
+    _I2C,        // i2c
+    _SPI,        // spi
+    _UNKNOWN_COM_PROTOCOL
 } comProtocol;
 /**
  * @brief the type of command going over the wire. only DCCEX / WITHROTTLE or Contol commands are allowed
@@ -125,7 +125,7 @@ class DccExInterface
 {
 private:
     comStation      sta = _UNKNOWN_STA;               // needs to be set at init; defines which side this is running either CS or NW
-    comProtocol     comp = UNKNOWN_COM_PROTOCOL;      // sets the com protocol used between CS and NW; Only serial is supported right now 
+    comProtocol     comp = _UNKNOWN_COM_PROTOCOL;      // sets the com protocol used between CS and NW; Only serial is supported right now 
     HardwareSerial  *s;                               // valid only for Serial; this needs to be refacrored into subclasses 
                                                       // instatated for specific protocols (maybe even at compile tme to reduce size)
     uint32_t        speed;                           
