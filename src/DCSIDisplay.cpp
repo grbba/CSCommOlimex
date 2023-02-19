@@ -44,7 +44,8 @@ void DCSIDisplay::setup() {
     screen.begin();
     touch.begin();
     screen.fillScreen(ILI9341_DARKCYAN);
-    screen.setFont(&FreeSans9pt7b); 
+    screen.setFont(&FiraCode_Regular10pt7b); 
+    screen.setFont(&D_DIN9pt7b); 
     // screen.println(F("\nDCCEX Network module"));
 }
 

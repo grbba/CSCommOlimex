@@ -50,7 +50,7 @@ DCCNetwork *network = NetworkInterface::getDCCNetwork();
  */
 void foofunc2(DccMessage msg)
 {
-    TRC(F("Enter fooFunc2" CR));
+    // TRC(F("Enter fooFunc2" CR));
     // const int qs = DCCI.getQueue(IN)->size();
     // const comStation station = static_cast<comStation>(msg.sta); // Dangerous it will always succedd and thus have ev values outside ofthe enum
     // const comStation station = _DCCSTA; // for testing purposes

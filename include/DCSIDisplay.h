@@ -38,10 +38,12 @@
 #include <AR1021.h>
 
 // Fonts to be used on the OLIMEX
-#include <Fonts/FreeMonoBoldOblique12pt7b.h>
-#include <Fonts/FreeSerif9pt7b.h>
-#include <Fonts/FreeSans9pt7b.h>
-#include <Fonts/FreeMono9pt7b.h>
+// #include <Fonts/FreeMonoBoldOblique12pt7b.h>
+// #include <Fonts/FreeSerif9pt7b.h>
+// #include <Fonts/FreeSans9pt7b.h>
+// #include <Fonts/FreeMono9pt7b.h>
+#include <Fonts/FiraCode_Regular10pt7b.h>
+#include <Fonts/D_DIN9pt7b.h>
 
 
 class DCSIDisplay {

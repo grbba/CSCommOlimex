@@ -134,6 +134,8 @@ void displayIntro() {
     sscanf(__DATE__, "%s %i %i", &month[0], &day, &year);
     sscanf(__TIME__, "%i:%i:%i", &hour, &min, &sec);
 
+    display.screen.setTextSize(1);
+
   display.screen.print("\nDCC++ EX Network Interface\n");
   display.screen.printf("Version %d.%d.%d" , MAJOR, MINOR, PATCH);
   display.screen.printf("-%d%d%d\n(c) 2023 grbba\n\n" , day, hour, min);
