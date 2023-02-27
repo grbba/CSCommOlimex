@@ -31,6 +31,6 @@
 
 
 #define MAX_QUEUE_SIZE 10
-#define MAX_MESSAGE_SIZE 32
+#define MAX_MESSAGE_SIZE 64
 
 #endif
