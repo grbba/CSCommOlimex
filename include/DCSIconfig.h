@@ -1,10 +1,10 @@
 /**
  * @file DCSIconfig.h
  * @author Gregor Baues
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2023-02-09
- * 
+ *
  * @copyright Copyright (c) 2023
  *
  * This is free software: you can redistribute it and/or modify it under
@@ -21,16 +21,15 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * See the GNU General Public License for more details <https://www.gnu.org/licenses/>
- * 
+ *
  */
 #ifndef DCSIconfig_h
 #define DCSIconfig_h
 
 #define DCCI_NW true  // enable this on the ESP handling the connectivity
-// #define DCCI_CS true   // set to true if compiles for the commandstation
+// #define DCCI_CS true // set to true if compiles for the commandstation
 
-
-#define MAX_QUEUE_SIZE 10
-#define MAX_MESSAGE_SIZE 64
+#define MAX_QUEUE_SIZE 6
+#define MAX_MESSAGE_SIZE 48
 
 #endif

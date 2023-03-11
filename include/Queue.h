@@ -41,7 +41,6 @@ private:
   const size_t capacity_ = S;
 
 public:
-
   Queue() : head_(0), tail_(0) {}
 
   bool isEmpty() const
@@ -76,19 +75,21 @@ public:
     head_ = (head_ + 1) % S;
     return element;
   }
-  
+
   T peek()
   {
-      if (isEmpty()) {
-        WARN(F("Queue is empty. Returning void element" CR));
-        return T();
-      }
-      return queue_[head_];
+    if (isEmpty())
+    {
+      WARN(F("Queue is empty. Returning void element" CR));
+      return T();
+    }
+    return queue_[head_];
   }
 
-  void clear() {
-    head_= 0;
-    tail_= 0;
+  void clear()
+  {
+    head_ = 0;
+    tail_ = 0;
   }
 
   /**
@@ -101,7 +102,7 @@ public:
     TRC(F("Printing queue" CR));
     while (idx != tail_)
     {
-      TRC(F("Element:%d:%s" CR), idx, queue_[idx]);// print some info here of the queue :: needs a serializer of the content
+      TRC(F("Element:%d:%s" CR), idx, queue_[idx]); // print some info here of the queue :: needs a serializer of the content
       idx = (idx + 1) % S;
     }
   }

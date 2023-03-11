@@ -1,10 +1,10 @@
 /**
  * @file DCSICommand.cpp
  * @author Gregor Baues
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2023-02-09
- * 
+ *
  * @copyright Copyright (c) 2023
  *
  * This is free software: you can redistribute it and/or modify it under
@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * See the GNU General Public License for more details <https://www.gnu.org/licenses/>
- * 
+ *
  */
 
 #include <Queue.h>
@@ -48,7 +48,8 @@ void Commands::prepare(char *cmd)
     Cmds.pq.push(token);
   }
 }
-CommandParams *Commands::getCommandParams() {
+CommandParams *Commands::getCommandParams()
+{
   return &pq;
 }
 void Commands::insert(Command *c)
@@ -107,10 +108,9 @@ int handleLLV(paramType &ptlist, CommandParams &p)
   p.clear(); // clear the queue; not necessary if we handle the command properly
   return 1;
 }
-
 int handleDiag(paramType &ptlist, CommandParams &p)
 {
-  INFO(F("DIAG messages will be send to client %d" CR), atoi(p.pop()));  
+  INFO(F("DIAG messages will be send to client %d" CR), atoi(p.pop()));
   p.clear(); // clear the queue; not necessary if we handle the command properly
   return 1;
 }
@@ -128,8 +128,7 @@ static const Command diag((char *)"diag", handleDiag, paramType::NUM_T);
  * @brief set the loglevel on the CommandStation
  *
  */
-static const Command _logl((char *)"llv", handleLLV, paramType::NUM_T);
-
+static const Command logl((char *)"llv", handleLLV, paramType::NUM_T);
 
 // Helper functions
 void removeChars(char *str, char *remove)
