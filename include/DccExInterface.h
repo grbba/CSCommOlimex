@@ -205,7 +205,7 @@ private:
     }
     auto _igetMsgQueue() -> _tDccQueue *
     {
-        return &msgQueue;
+        return &msgQueue;        
     }
     auto _isetup(HardwareSerial *s = &Serial1, uint32_t speed = 115200) -> void;
     auto _iSetup(comStation station) -> void

@@ -83,7 +83,7 @@ void foofunc2(DccMessage msg)
 auto DccExInterface::_isetup(HardwareSerial *_s, uint32_t _speed) -> void
 {
     INFO(F("Setting up DccEx Network interface connection ..." CR));
-    
+
     s = _s;          // Serial port used for com depends on the wiring
     speed = _speed;  // speed of the connection
     s->begin(speed); // start the serial port at the given baud rate
@@ -164,7 +164,7 @@ void DccExInterface::_iLoop()
         m->process(m); // that will call either recieve() or write()
         DccExInterface::releaseMsg(m);
     }
-    
+
     MsgPacketizer::update(); // send back replies and get commands/trigger the callback
 };
 
@@ -176,10 +176,12 @@ auto DccExInterface::_iDecode(csProtocol p) -> const char *
     if ((p >= UNKNOWN_CS_PROTOCOL) || (p < 0))
     {
         ERR(F("Cannot decode csProtocol %d returning unkown"), p);
-        strcpy_P(decodeBuffer, (char *)pgm_read_word(&(csProtocolNames[UNKNOWN_CS_PROTOCOL])));
+        // strcpy_P(decodeBuffer, (char *)pgm_read_word(&(csProtocolNames[UNKNOWN_CS_PROTOCOL])));
+        strcpy(decodeBuffer, csProtocolNames[UNKNOWN_CS_PROTOCOL]);
         return decodeBuffer;
     }
-    strcpy_P(decodeBuffer, (char *)pgm_read_word(&(csProtocolNames[p])));
+    // strcpy_P(decodeBuffer, (char *)pgm_read_word(&(csProtocolNames[p])));
+    strcpy(decodeBuffer, csProtocolNames[p]);
     return decodeBuffer;
 }
 auto DccExInterface::_iDecode(comStation s) -> const char *
@@ -191,11 +193,20 @@ auto DccExInterface::_iDecode(comStation s) -> const char *
     if ((s >= _UNKNOWN_STA) || (s < 0))
     {
         ERR(F("Cannot decode comStation %d returning unkown"), s);
+#ifdef ESP32
+        strcpy(decodeBuffer, comStationNames[_UNKNOWN_STA]);
+#else
         strcpy_P(decodeBuffer, (char *)pgm_read_word(&(comStationNames[_UNKNOWN_STA])));
+#endif
         return decodeBuffer;
     }
     // TRC(F("Decoding comStation:[%d]" CR), (int) s);
+#ifdef ESP32
+    strcpy(decodeBuffer, comStationNames[s]);
+#else
     strcpy_P(decodeBuffer, (char *)pgm_read_word(&(comStationNames[s])));
+#endif
+
     return decodeBuffer;
 }
 

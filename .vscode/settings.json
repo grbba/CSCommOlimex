@@ -2,5 +2,8 @@
     "files.associations": {
         "cstddef": "cpp"
     },
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "C_Cpp.formatting": "clangFormat"
 }
