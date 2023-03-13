@@ -176,12 +176,18 @@ auto DccExInterface::_iDecode(csProtocol p) -> const char *
     if ((p >= UNKNOWN_CS_PROTOCOL) || (p < 0))
     {
         ERR(F("Cannot decode csProtocol %d returning unkown"), p);
-        // strcpy_P(decodeBuffer, (char *)pgm_read_word(&(csProtocolNames[UNKNOWN_CS_PROTOCOL])));
+#ifdef ESP32
         strcpy(decodeBuffer, csProtocolNames[UNKNOWN_CS_PROTOCOL]);
+#else
+        strcpy_P(decodeBuffer, (char *)pgm_read_word(&(csProtocolNames[UNKNOWN_CS_PROTOCOL])));
+#endif
         return decodeBuffer;
     }
-    // strcpy_P(decodeBuffer, (char *)pgm_read_word(&(csProtocolNames[p])));
+#ifdef ESP32
     strcpy(decodeBuffer, csProtocolNames[p]);
+#else
+    strcpy_P(decodeBuffer, (char *)pgm_read_word(&(csProtocolNames[p])));
+#endif
     return decodeBuffer;
 }
 auto DccExInterface::_iDecode(comStation s) -> const char *
