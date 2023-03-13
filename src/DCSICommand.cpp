@@ -128,7 +128,7 @@ static const Command diag((char *)"diag", handleDiag, paramType::NUM_T);
  * @brief set the loglevel on the CommandStation
  *
  */
-static const Command logl((char *)"llv", handleLLV, paramType::NUM_T);
+static const Command logll((char *)"llv", handleLLV, paramType::NUM_T);
 
 // Helper functions
 void removeChars(char *str, char *remove)

@@ -257,7 +257,7 @@ auto DccExInterface::_iSize() -> size_t
 }
 
 #ifndef DCCI_CS // only valid on the NW station
-auto DccExInterface::replyHandler(DccMessage m) -> void
+auto DccExInterface::replyHandler(DccMessage &m) -> void
 {
 
     INFO(F("Processing reply from the CommandStation for client [%d]..." CR), m.client);
@@ -314,7 +314,7 @@ auto DccExInterface::replyHandler(DccMessage m) -> void
         }
     }
 }
-auto DccExInterface::diagHandler(DccMessage m) -> void
+auto DccExInterface::diagHandler(DccMessage &m) -> void
 {
     INFO(F("Recieved DIAG: %s" CR), m.msg.c_str());
 };

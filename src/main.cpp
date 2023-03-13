@@ -34,10 +34,6 @@ void displayIntro();
 NetworkInterface nwi1;
 NetworkInterface nwi2;
 
-// (1) Declare CommandstationInterface. no error checking for multiple of those yet here can only be one maybe two 
-// in the future if multipe serial ports may be possible to create // connections if the com is getting the bottleneck
-DccExInterface _idccex;
-
 // (1) Start NetworkInterface - HTTP callback
 
 // void httpRequestHandler(ParsedRequest *req, Client* client) {
@@ -61,6 +57,7 @@ void setup()
   display.setup();  
   displayIntro();
 
+
   INFO(F("DCC++ EX NetworkInterface Standalone" CR));
 
   // setup the serial (or other connection ) to the MEGA
@@ -69,7 +66,7 @@ void setup()
 
   INFO(F("Opening Connection to the CommandStation ..." CR));
   // create the connection to the Command station
-  DCCI.setup(_NWSTA);  // set up as Network station just use the default values
+  DccExInterface::setup(_NWSTA);  // set up as Network station just use the default values
 
 
   // open the connection to the "outside world" over Ethernet (cabled) or WiFi (wireless) 
@@ -119,7 +116,7 @@ void loop()
 // e.g. config commands for the commandstation will be handled locally
 // other commands like <s> will be send to the Command station
 
-  DCCI.loop();
+  DccExInterface::loop();
   // display.loop();
 }
 

@@ -19,7 +19,9 @@
 #define dccex_interface_h
 
 #include <Arduino.h>
+#ifdef DCCI_CS
 #include <avr/pgmspace.h>
+#endif
 #include <DCSIlog.h>
 #ifndef DCCI_CS
 #include <Transport.h>
@@ -67,9 +69,9 @@ typedef enum
  */
 typedef enum
 {
-    SRL, // serial
-    I2C, // i2c
-    SPI, // spi
+    _SRL, // serial
+    _I2C, // i2c
+    _SPI, // spi
     UNKNOWN_COM_PROTOCOL
 } comProtocol;
 

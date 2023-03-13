@@ -84,7 +84,7 @@ void TransportProcessor::tokenHandler(scanType s, char *token) {
         }
     }
     _sseq[currentConnection->id];
-    if(queue) DCCI.queue(currentConnection->id, p, token);
+    if(queue) DccExInterface::queue(currentConnection->id, p, token);
 }
 /**
  * @brief Reads what is available on the incomming TCP stream and hands it over to the protocol handler.

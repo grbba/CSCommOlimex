@@ -276,6 +276,10 @@ public:
 
 #endif
 
+#ifndef DCCI_CS
+    #define MEMC(code) code
+#endif
+
 extern DCSILog dccLog;
 
 #endif
