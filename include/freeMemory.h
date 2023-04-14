@@ -1,6 +1,7 @@
 /*
  *  © 2020, Harald Barth
- *  
+ *  © 2023, Gregor Baues
+ *
  *  This file is part of DCC-EX
  *
  *  This is free software: you can redistribute it and/or modify

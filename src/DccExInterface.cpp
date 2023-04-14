@@ -268,11 +268,6 @@ auto DccExInterface::notYetHandler(DccMessage &m) -> void
     }
     return;
 };
-auto DccExInterface::_iSize() -> size_t
-{
-    return msgQueue.size();
-}
-
 #ifndef DCCI_CS // only valid on the NW station
 auto DccExInterface::replyHandler(DccMessage &m) -> void
 {
@@ -336,6 +331,11 @@ auto DccExInterface::diagHandler(DccMessage &m) -> void
     INFO(F("Recieved DIAG: %s" CR), m.msg.c_str());
 };
 #endif
+
+auto DccExInterface::_iSize() -> size_t
+{
+    return msgQueue.size();
+}
 
 DccExInterface &DccExInterface::GetInstance()
 {
